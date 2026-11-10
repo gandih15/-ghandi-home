@@ -1,0 +1,14 @@
+dist/
+build/stage/
+node_modules/
+*.log
+.DS_Store
+
+# ---- SECRETS: never in a public repo (kept privately by the developer) ----
+build/keys.json
+build/dev-cred.json
+app/js/lk.js
+app/js/devcred.js
+owner-tools/
+releases/*Keygen*
+docs/README-old-nwjs.md

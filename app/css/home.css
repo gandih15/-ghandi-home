@@ -1,0 +1,23 @@
+/* Ghandi Home — styles for the home-goods modules */
+.pp-dd{position:absolute;z-index:60;inset-inline:0;top:100%;margin-top:4px;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.18);max-height:320px;overflow:auto}
+.pp-dd.hide{display:none}
+.pp-it{display:flex;gap:10px;align-items:center;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--line)}
+.pp-it:last-child{border-bottom:0}
+.pp-it.on,.pp-it:hover{background:var(--panel2)}
+.pp-it .gem.sm,.pp-it .sw8{width:30px;height:30px;font-size:16px;flex:none}
+.bar{height:8px;border-radius:6px;background:var(--panel2);overflow:hidden}
+.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--gold2,#d4a64a));border-radius:6px}
+.bride-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.12)}
+.bride-card{transition:transform .15s,box-shadow .15s}
+.home-alerts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:14px}
+.home-alerts .ha{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;text-align:start;font:inherit;color:inherit;border:1px solid var(--line2)}
+.home-alerts .ha .e{font-size:24px}
+.home-alerts .ha b{display:block;font-size:13px}
+.home-alerts .ha .num{font-size:18px;font-weight:800}
+.home-alerts .ha.bad{border-inline-start:4px solid var(--bad)}
+.home-alerts .ha.warn{border-inline-start:4px solid var(--warn,#e0a100)}
+.home-alerts .ha.ok{border-inline-start:4px solid var(--ok)}
+.home-alerts .ha:hover{transform:translateY(-1px)}
+.pos-extra #xInst{font-weight:800}
+.receipt .a4wrap,.preview-wrap .a4wrap{zoom:.56;margin:0 auto}
+.receipt:has(.a4wrap){width:auto!important;max-width:none!important}

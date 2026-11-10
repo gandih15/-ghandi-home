@@ -1,0 +1,24 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const crypto = require('crypto'), keys = require('./keys.json'), K = Buffer.from(keys.hmac, 'hex');
+const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ', enc = b => { let bits = ''; for (const x of b) bits += x.toString(2).padStart(8, '0'); let s = ''; for (let i = 0; i < bits.length; i += 5) s += B32[parseInt(bits.substr(i, 5).padEnd(5, '0'), 2)]; return s; };
+(async () => {
+  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' }); const pg = await b.newPage({ viewport: { width: 1440, height: 860 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message));
+  const D = '/home/claude/ghandi/build/shots/tier/', ev = (f, a) => pg.evaluate(f, a), W = t => pg.waitForTimeout(t || 300), ok = (c, m) => console.log((c ? 'PASS ' : 'FAIL ') + m);
+  await pg.goto('file:///home/claude/ghandi/app/index.html?demo&reset'); await W(2500);
+  ok(await pg.$('#lForgot'), '"Forgot password?" on sign-in'); await pg.click('#lForgot'); await W(500); await pg.screenshot({ path: D + '30_forgot.png' });
+  const fp = (await pg.textContent('.modal .fp')).trim();
+  const pw = enc(crypto.createHmac('sha256', K).update('GHR1|' + fp.replace(/-/g, '')).digest().slice(0, 5)).match(/.{4}/g).join('-');
+  await pg.fill('#rcU', 'support'); await pg.fill('#rcP', 'AAAA-BBBB'); await pg.click('#rcGo'); await W(400); ok(await pg.$('#rcU'), 'wrong recovery rejected');
+  await pg.fill('#rcP', pw.toLowerCase()); await pg.click('#rcGo'); await W(600); ok(await pg.$('#rcL'), 'keygen recovery password accepted (' + pw + ')'); await pg.screenshot({ path: D + '31_recovery_users.png' });
+  await pg.click('[data-a="pw"][data-u="u1"]'); await W(200); await pg.fill('#ua1', 'newpass9'); await pg.click('#uaS'); await W(800);
+  await pg.click('[data-a="ed"][data-u="u1"]'); await W(200); await pg.fill('#ueU', 'owner'); await pg.click('#ueS'); await W(300);
+  await pg.click('#rcD'); await W(500);
+  await pg.selectOption('#lu', 'u1'); await pg.fill('#lp', 'newpass9'); await pg.click('#lb'); await W(1200);
+  ok(await ev(() => App.user && App.user.username === 'owner' && App.user.mustChange === true), 'signed in with new password + renamed user, asked to choose own password');
+  await ev(() => Modal.close());
+  await ev(() => go('users')); await W(400); ok(await pg.$('[data-udel]'), 'delete buttons on users page'); await pg.screenshot({ path: D + '32_users_page.png' });
+  await pg.click('[data-udel="u3"]'); await W(200); await pg.click('.modal [data-y]'); await W(300); ok(await ev(() => !Store.db.users.some(u => u.id === 'u3')), 'user deleted');
+  await ev(() => DevGate.enter('test')); await W(500); ok(await pg.$('#dvUsers table'), 'developer panel lists shop users'); await pg.screenshot({ path: D + '33_dev_users.png' });
+  console.log(errs.length ? errs.join('\n') : 'NO PAGE ERRORS'); await b.close();
+})();

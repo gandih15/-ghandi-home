@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Ghandi — Customer display</title>
+<style>
+@font-face{font-family:Emo;src:url(fonts/NotoColorEmoji.ttf)}
+:root{--bg:#1a0b1d;--p:#2a1430;--line:rgba(255,255,255,.1);--rose:#f06aa5;--gold:#e8c46a;--t:#fff6fb;--m:#c9a9c0}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:radial-gradient(1200px 700px at 85% -10%,#4a1d4f 0,transparent 60%),var(--bg);color:var(--t);font-family:"Segoe UI",Tahoma,Arial,Emo,sans-serif;overflow:hidden;cursor:none}
+.top{display:flex;align-items:center;gap:16px;padding:22px 34px;border-bottom:1px solid var(--line)}
+.logo{width:64px;height:64px;border-radius:18px;background:#fff center/contain no-repeat;flex:none}
+.shop{font-size:30px;font-weight:800}.slog{color:var(--m);font-size:16px}
+.wrap{display:grid;grid-template-columns:1.4fr 1fr;height:calc(100% - 109px)}
+.items{overflow:hidden;padding:18px 30px;display:flex;flex-direction:column;gap:10px}
+.it{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--p);border-radius:16px;border:1px solid var(--line);animation:in .25s ease}
+.it .im{width:58px;height:58px;border-radius:14px;background:#fff center/cover;display:grid;place-items:center;font-size:30px;flex:none}
+.it .n{flex:1;font-size:21px;font-weight:600}.it .q{color:var(--m);font-size:18px}
+.it .p{font-size:22px;font-weight:800;direction:ltr}.it s{color:var(--m);font-size:15px;display:block;text-align:end}
+.side{background:linear-gradient(180deg,rgba(240,106,165,.16),rgba(232,196,106,.06));border-inline-start:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;padding:30px;text-align:center}
+.lbl{color:var(--m);font-size:22px}.tot{font-size:96px;font-weight:900;line-height:1;direction:ltr}.cur{font-size:30px;color:var(--gold)}
+.saved{background:rgba(232,196,106,.15);color:var(--gold);padding:10px 20px;border-radius:999px;font-size:22px;font-weight:700}
+.cust{font-size:24px}.pts{font-size:22px;color:var(--gold)}
+.idle,.thanks{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;background:inherit}
+.idle .logo{width:170px;height:170px;border-radius:40px}.big{font-size:62px;font-weight:900}.msg{font-size:30px;color:var(--m)}
+.thanks .e{font-size:120px}.on{display:flex!important}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+</style></head><body>
+<div class="top"><div class="logo" id="lg"></div><div><div class="shop" id="sh"></div><div class="slog" id="sl"></div></div></div>
+<div class="wrap"><div class="items" id="its"></div><div class="side"><div class="lbl" id="tl">الإجمالي</div><div><span class="tot" id="tot">0.00</span> <span class="cur" id="cu"></span></div><div class="saved" id="sv" style="display:none"></div><div class="cust" id="cn"></div><div class="pts" id="pt"></div></div></div>
+<div class="idle on" id="idle"><div class="logo" id="lg2"></div><div class="big" id="sh2"></div><div class="msg" id="msg"></div></div>
+<div class="thanks" id="thx"><div class="e">💖</div><div class="big" id="ty"></div><div class="msg" id="tym"></div></div>
+<script>
+function money(v) { return (Math.round((+v || 0) * 100) / 100).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function $(i) { return document.getElementById(i); }
+function show(d) {
+  var en = d.dir === 'ltr'; document.documentElement.dir = d.dir || 'rtl';
+  if (d.shop !== undefined) { $('sh').textContent = $('sh2').textContent = d.shop; $('sl').textContent = d.slogan || ''; $('msg').textContent = d.msg || ''; ['lg', 'lg2'].forEach(function (k) { $(k).style.backgroundImage = d.logo ? 'url(' + d.logo + ')' : ''; $(k).style.display = d.logo ? '' : 'none'; }); $('cu').textContent = d.cur || ''; }
+  $('idle').classList.toggle('on', d.mode === 'idle'); $('thx').classList.toggle('on', d.mode === 'thanks');
+  $('tl').textContent = en ? 'Total' : 'الإجمالي';
+  if (d.mode === 'cart') {
+    $('its').innerHTML = (d.items || []).slice(-7).map(function (i) { return '<div class="it"><div class="im" style="' + (i.img ? 'background-image:url(' + i.img + ')' : '') + '">' + (i.img ? '' : i.e || '🛍️') + '</div><div class="n">' + esc(i.n) + '<div class="q">× ' + i.q + '</div></div><div class="p">' + (i.b ? '<s>' + money(i.b * i.q) + '</s>' : '') + money(i.p * i.q) + '</div></div>'; }).join('');
+    $('tot').textContent = money(d.total);
+    $('sv').style.display = d.saved > 0 ? '' : 'none'; $('sv').textContent = (en ? '🎁 You save ' : '🎁 وفّرتي ') + money(d.saved);
+    $('cn').textContent = d.cust ? (en ? 'Welcome ' : 'أهلاً ') + d.cust + ' 💖' : '';
+    $('pt').textContent = d.pts != null ? '⭐ ' + d.pts + (en ? ' points' : ' نقطة') + (d.earn ? (en ? ' · +' + d.earn + ' with this order' : ' · +' + d.earn + ' مع الفاتورة دي') : '') : (d.earn ? '⭐ +' + d.earn + (en ? ' points' : ' نقطة') : '');
+  }
+  if (d.mode === 'thanks') {
+    $('ty').textContent = (en ? 'Thank you' : 'شكراً لزيارتك') + (d.cust ? ' ' + d.cust : '');
+    $('tym').innerHTML = (d.change ? (en ? 'Change: ' : 'الباقي: ') + '<b>' + money(d.change) + '</b><br>' : '') + (d.earned ? '⭐ +' + d.earned + (en ? ' points earned' : ' نقطة اتضافت') + (d.pts != null ? (en ? ' · balance ' : ' · رصيدك ') + d.pts : '') : '');
+  }
+}
+window.addEventListener('message', function (e) { if (e.data && e.data.mode) show(e.data); });
+try { require('electron').ipcRenderer.on('cd', function (e, d) { show(d); }); } catch (e) { }
+</script></body></html>
