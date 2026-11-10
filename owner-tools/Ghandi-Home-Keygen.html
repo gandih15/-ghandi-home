@@ -1,0 +1,78 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>مولّد أكواد غاندي هوم (الأدوات المنزلية وتجهيز العرائس)</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Tahoma,sans-serif;background:radial-gradient(900px 500px at 85% -10%,rgba(255,79,154,.25),transparent 60%),linear-gradient(145deg,#1a0619,#4a0d3d 50%,#2a0d4a);min-height:100vh;color:#2b1a26;display:flex;justify-content:center;padding:28px 14px}
+.box{background:#fff;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.45);width:min(760px,100%);padding:26px}
+h1{margin:0;font-size:23px}.m{color:#86727e;font-size:13px}
+.tabs{display:flex;gap:6px;background:#f6edf2;border-radius:14px;padding:4px;margin:18px 0 6px}.tabs button{flex:1;border:0;background:none;padding:11px;border-radius:11px;font:inherit;font-weight:700;color:#86727e;cursor:pointer}.tabs button.on{background:#fff;color:#c2185b;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+label{display:block;font-size:12px;font-weight:700;color:#86727e;margin:14px 0 5px}
+input,select{width:100%;padding:11px 12px;border:1px solid #e5c9d9;border-radius:11px;font:inherit;background:#fdf7fa}
+.ltr{direction:ltr;text-align:center;font-family:Consolas,monospace;letter-spacing:2px;font-size:18px;text-transform:uppercase}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.pri{border:0;border-radius:13px;padding:14px;font:inherit;font-weight:800;font-size:16px;cursor:pointer;background:linear-gradient(135deg,#ff4f9a,#a63bf0);color:#fff;width:100%;margin-top:16px}
+.out{margin-top:16px;background:#1f0b22;color:#ffe2ad;border-radius:16px;padding:18px;text-align:center;font-family:Consolas,monospace;font-size:28px;letter-spacing:3px;direction:ltr;min-height:72px;user-select:all}
+.sm{border:1px solid #e5c9d9;background:#fff;border-radius:10px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer}
+.warn{background:#fff4e2;color:#8a5a10;border-radius:11px;padding:10px 12px;font-size:12px;margin-top:16px;line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}td,th{padding:7px 6px;border-bottom:1px solid #f0dde8;text-align:start}
+.logo{float:left;width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#ffe2ad,#d4952e);display:grid;place-items:center;font-size:26px}
+.hide{display:none}
+</style></head><body><div class="box"><div class="logo">💎</div><h1>مولّد أكواد غاندي</h1><div class="m">للمطوّر فقط — م. محمد علي · 01098811581 — يشتغل من غير إنترنت</div>
+<div class="tabs"><button class="on" data-t="act">🔑 كود تفعيل</button><button data-t="dev">🛠️ فتح لوحة المطوّر</button><button data-t="rec">🔓 استرجاع دخول محل</button><button data-t="log">📋 سجل التفعيلات</button></div>
+<section id="t-act">
+<label>بصمة جهاز العميل</label><input id="fp" class="ltr" placeholder="XXXXX-XXXXX-XXXXX-XXXXX">
+<div class="row"><div><label>اسم المحل (للسجل)</label><input id="n" placeholder="مثال: لمسة أنوثة"></div><div><label>صاحب المحل</label><input id="o"></div></div>
+<div class="row"><div><label>الموبايل</label><input id="ph" style="direction:ltr"></div><div><label>المدينة</label><input id="ct"></div></div>
+<label>مدة الترخيص</label><select id="d"><option value="0">مدى الحياة</option><option value="7">7 أيام (تجربة)</option><option value="30">شهر</option><option value="90">3 شهور</option><option value="180">6 شهور</option><option value="365">سنة</option><option value="730">سنتين</option></select>
+<button class="pri" id="go">توليد كود التفعيل</button>
+<div class="out" id="out"></div>
+<div class="row" style="margin-top:10px"><button class="sm" id="cp">📋 نسخ الكود</button><button class="sm" id="wa">💬 رسالة واتساب جاهزة</button></div>
+</section>
+<section id="t-dev" class="hide">
+<div class="m" style="margin-top:12px">صاحب المحل يفتح «التفعيل والدعم ← لوحة المطوّر» (أو Ctrl+Shift+D) ويديك البصمة ورقم الطلب.</div>
+<label>بصمة الجهاز</label><input id="dfp" class="ltr" placeholder="XXXXX-XXXXX-XXXXX-XXXXX">
+<label>رقم الطلب</label><input id="dch" class="ltr" placeholder="XXXXXX" maxlength="8">
+<button class="pri" id="dgo">توليد كود الفتح</button>
+<div class="out" id="dout"></div>
+</section>
+<section id="t-rec" class="hide">
+<div class="m" style="margin-top:12px">لما صاحب المحل ينسى كلمة السر: يضغط «نسيت كلمة السر؟» في شاشة الدخول، ويبعتلك بصمة الجهاز اللي ظاهرة. حطها هنا وابعتله اليوزر والباسورد اللي هيطلعوا — بيشتغلوا على الجهاز ده بس.</div>
+<label>بصمة الجهاز</label><input id="rfp" class="ltr" placeholder="XXXXX-XXXXX-XXXXX-XXXXX">
+<button class="pri" id="rgo">توليد بيانات الاسترجاع</button>
+<div class="out" id="rout" style="line-height:1.9"></div>
+<button class="sm hide" id="rcp">📋 رسالة واتساب جاهزة</button>
+</section>
+<section id="t-log" class="hide"><div class="row" style="margin-top:12px"><button class="sm" id="ex">⬇️ تصدير إكسيل (CSV)</button></div><table id="log"></table></section>
+<div class="warn">⚠️ الملف ده هو «الختم» بتاعك: اللي معاه يقدر يطلّع أكواد. خلّيه معاك بس، واعمل منه نسخة على فلاشة أو إيميلك علشان لو ضاع.</div></div>
+<script>
+var K=new Uint8Array([53,222,6,216,231,184,179,117,190,129,218,64,66,104,155,239,224,36,35,146,0,47,94,76,174,100,243,138,136,160,113,26]);
+var B32="0123456789ABCDEFGHJKMNPQRSTVWXYZ",EPOCH=Date.UTC(2026,0,1);
+function $(i){return document.getElementById(i)}
+function norm(s){return String(s||"").toUpperCase().replace(/[\s\-_.]/g,"").replace(/O/g,"0").replace(/[IL]/g,"1").replace(/U/g,"V")}
+function enc(b){var bits="";for(var i=0;i<b.length;i++)bits+=("0000000"+b[i].toString(2)).slice(-8);var s="";for(i=0;i<bits.length;i+=5)s+=B32[parseInt((bits.substr(i,5)+"0000").slice(0,5),2)];return s}
+function mac(msg,n){return crypto.subtle.importKey("raw",K,{name:"HMAC",hash:"SHA-256"},false,["sign"]).then(function(k){return crypto.subtle.sign("HMAC",k,new TextEncoder().encode(msg))}).then(function(h){return new Uint8Array(h).slice(0,n)})}
+function fpOk(f){return /^[0-9A-F]{5}(-[0-9A-F]{5}){3}$/.test(f)}
+function fmtFp(v){v=v.toUpperCase().replace(/[^0-9A-F]/g,"").slice(0,20);return v.match(/.{1,5}/g)?v.match(/.{1,5}/g).join("-"):""}
+["fp","dfp"].forEach(function(id){$(id).oninput=function(){var p=this.selectionStart;this.value=fmtFp(this.value)}});
+document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b)});["act","dev","rec","log"].forEach(function(t){$("t-"+t).classList.toggle("hide",t!==b.dataset.t)});draw()}});
+function hist(){try{return JSON.parse(localStorage.getItem("ghandi.keygen.log")||"[]")}catch(e){return[]}}
+function draw(){var h=hist();$("log").innerHTML="<tr><th>التاريخ</th><th>المحل</th><th>صاحبه</th><th>البصمة</th><th>الكود</th><th>الانتهاء</th></tr>"+h.slice().reverse().map(function(r){return"<tr><td>"+new Date(r.i).toLocaleDateString("en-GB")+"</td><td>"+(r.n||"")+(r.c?" — "+r.c:"")+"</td><td>"+(r.o||"")+(r.p?"<br>"+r.p:"")+"</td><td style=\"direction:ltr;font-family:Consolas\">"+r.f+"</td><td style=\"direction:ltr;font-family:Consolas\">"+(r.k||"")+"</td><td>"+(r.e?new Date(r.e).toLocaleDateString("en-GB"):"مدى الحياة")+"</td></tr>"}).join("")}
+$("go").onclick=function(){
+ var fp=$("fp").value.trim();if(!fpOk(fp)){alert("البصمة لازم تكون 20 حرف زي: D3D62-B24D9-1CB57-1B295");return}
+ var d=+$("d").value,days=0,exp=0;if(d){exp=Date.now()+d*864e5;days=Math.ceil((exp-EPOCH)/864e5);if(days>16383)days=16383;exp=EPOCH+days*864e5}
+ var nonce=crypto.getRandomValues(new Uint16Array(1))[0],v=((1<<30)>>>0)+(days<<16)+nonce;
+ var p=new Uint8Array([(v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255]),ph=Array.from(p).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("");
+ Promise.all([mac("GHL1|"+fp.replace(/-/g,"")+"|"+ph,6),mac("GHX1|"+fp.replace(/-/g,""),4)]).then(function(r){var m=r[0],mk=r[1],all=new Uint8Array(10);for(var i=0;i<4;i++)all[i]=p[i]^mk[i];all.set(m,4);var c=enc(all).match(/.{4}/g).join("-");$("out").textContent=c;
+  var h=hist();h.push({f:fp,n:$("n").value.trim(),o:$("o").value.trim(),p:$("ph").value.trim(),c:$("ct").value.trim(),k:c,i:Date.now(),e:exp});localStorage.setItem("ghandi.keygen.log",JSON.stringify(h));draw()})
+ .catch(function(e){alert("افتح الملف بجوجل كروم: "+e.message)});
+};
+$("rfp").oninput=function(){this.value=fmtFp(this.value)};
+$("rgo").onclick=function(){var fp=$("rfp").value.trim();if(!fpOk(fp)){alert("اكتب البصمة صح");return}
+ mac("GHR1|"+fp.replace(/-/g,""),5).then(function(m){var p=enc(m).match(/.{4}/g).join("-");$("rout").innerHTML="اليوزر: <b>support</b><br>الباسورد: <b>"+p+"</b>";$("rcp").classList.remove("hide");
+ $("rcp").onclick=function(){copyT("بيانات استرجاع الدخول لبرنامج غاندي (للجهاز ده بس):\nفي شاشة الدخول اضغط «نسيت كلمة السر؟»\nاليوزر: support\nالباسورد: "+p+"\nبعد الدخول تقدر تغيّر كلمة سر أي مستخدم.\nالدعم: م. محمد علي 01098811581");alert("اتنسخت ✓")}})};
+$("dgo").onclick=function(){var fp=$("dfp").value.trim(),ch=norm($("dch").value);if(!fpOk(fp)||ch.length!==6){alert("اكتب البصمة ورقم الطلب صح");return}
+ mac("GHD1|"+fp.replace(/-/g,"")+"|"+ch,5).then(function(m){$("dout").textContent=enc(m).match(/.{4}/g).join("-")})};
+function copyT(t){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}
+$("cp").onclick=function(){if($("out").textContent)copyT($("out").textContent)};
+$("wa").onclick=function(){var c=$("out").textContent;if(!c)return;copyT("أهلاً بيك 👋\nده كود تفعيل برنامج غاندي:\n\n"+c+"\n\nافتح البرنامج والصق الكود في خانة «كود التفعيل» واضغط تفعيل ✅\nللدعم: 01098811581");alert("الرسالة اتنسخت — الصقها في الواتساب")};
+$("ex").onclick=function(){var h=hist(),csv="\ufeffDate,Shop,Owner,Phone,City,Device,Code,Expires\r\n"+h.map(function(r){return[new Date(r.i).toISOString().slice(0,10),r.n,r.o||"",r.p||"",r.c||"",r.f,r.k||"",r.e?new Date(r.e).toISOString().slice(0,10):"lifetime"].map(function(x){return"\""+String(x||"").replace(/"/g,"\"\"")+"\""}).join(",")}).join("\r\n");var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="ghandi_licenses.csv";a.click()};
+draw();
+</script></body></html>
