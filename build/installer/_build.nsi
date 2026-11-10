@@ -6,12 +6,12 @@
 
 !define APPNAME "Ghandi Home"
 !define APPAR "غاندي للأدوات المنزلية"
-!define VERSION "1.0.0"
+!define VERSION "1.1.0"
 !define PUBLISHER "Eng. Mohamed Ali - 01098811581"
 !define UNKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GhandiHome"
 
 Name "${APPAR} — ${APPNAME}"
-OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Setup-1.0.0.exe"
+OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Setup-1.1.0.exe"
 InstallDir "C:\GhandiHome"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma

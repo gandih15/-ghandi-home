@@ -114,6 +114,10 @@ var Demo = {
       db.products.forEach(function (p, i) { p.wh = {}; if (p.cat === 'سجاد') { var a = Math.floor(U.n(p.stock) * 0.6); p.wh.w3 = a; } else if (U.n(p.stock) > 4) { p.wh.store = Math.floor(U.n(p.stock) / 2); } Wh.ensure(p); });
       db.transfers.push({ id: 't1', no: 1, date: T - 2 * DAY, from: 'store', to: 'main', by: 'م. محمد علي', note: '', items: [{ pid: 'p2', name: 'غسالة أوتوماتيك 7 كيلو', qty: 2 }, { pid: 'p14', name: 'طقم ملايات قطن 4 قطع', qty: 5 }] }); db.seq.transfer = 1;
       s.invoice.paper = 'A4';
+      ['p1', 'p2', 'p3', 'p4', 'p5'].forEach(function (id) { P(id).serial = true; });
+      var hh = homeCfg(); hh.reps = ['أ. سامح (مندوب المعرض)']; hh.comm = { 'u:u1': 1, 'u:u2': 1.5, 'r:أ. سامح (مندوب المعرض)': 2 };
+      hh.packages = [{ id: 'k1', name: 'باكدج المطبخ الكامل', price: 7900, items: [{ pid: 'p8', name: 'طقم صيني 72 قطعة أبيض ذهبي', qty: 1, price: 3200 }, { pid: 'p13', name: 'طقم حلل جرانيت 10 قطع رمادي', qty: 1, price: 2950 }, { pid: 'p10', name: 'طقم أركوبال 46 قطعة', qty: 1, price: 1600 }, { pid: 'p11', name: 'طقم كاسات 12 قطعة', qty: 2, price: 380 }] }, { id: 'k2', name: 'باكدج الأجهزة الأساسية', price: 42000, items: [{ pid: 'p1', name: 'ثلاجة توشيبا 14 قدم نوفروست', qty: 1, price: 19500 }, { pid: 'p2', name: 'غسالة أوتوماتيك 7 كيلو', qty: 1, price: 14500 }, { pid: 'p3', name: 'بوتاجاز 5 شعلة فول أوبشن', qty: 1, price: 9800 }] }];
+      db.supInst.push({ id: 'y1', no: 1, date: T - 20 * DAY, supplier: 's1', total: 19400, ref: 'فاتورة توكيل 5531', schedule: [{ n: 1, due: U.today(T - 5 * DAY), amount: 6466.66, paid: 6466.66 }, { n: 2, due: U.today(T + 2 * DAY), amount: 6466.66, paid: 0 }, { n: 3, due: U.today(T + 32 * DAY), amount: 6466.68, paid: 0 }], pays: [{ t: T - 5 * DAY, v: 6466.66, m: 'cash', by: 'م. محمد علي' }], by: 'م. محمد علي' }); db.seq.supInst = 1; db.suppliers[0].balance = 12933.34;
       Store.saveNow();
     });
   }

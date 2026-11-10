@@ -360,7 +360,7 @@ var A4 = {
     var hasW = s.items.some(function (i) { var p = i.pid && Store.product(i.pid); return p && U.n(p.warranty) > 0; });
     var rows = s.items.map(function (i, x) {
       var p = i.pid && Store.product(i.pid), w = p && U.n(p.warranty) > 0 ? p.warranty + L(' شهر', ' mo') : '—';
-      return [x + 1, U.esc(i.name) + (i.base > i.price && i.promo ? '<br><span class="badge">★ ' + U.esc(i.promo) + '</span>' : ''), U.esc(p ? Meas.unitName(p) : '—'), U.r2(i.qty), (i.base > i.price ? '<s style="color:#888">' + U.money(i.base) + '</s><br>' : '') + U.money(i.price), U.money(i.qty * i.price)].concat(hasW ? [w] : []);
+      return [x + 1, U.esc(i.name) + (i.serial ? '<br><span class="badge">S/N: ' + U.esc(i.serial) + '</span>' : '') + (i.base > i.price && i.promo ? '<br><span class="badge">★ ' + U.esc(i.promo) + '</span>' : ''), U.esc(p ? Meas.unitName(p) : '—'), U.r2(i.qty), (i.base > i.price ? '<s style="color:#888">' + U.money(i.base) + '</s><br>' : '') + U.money(i.price), U.money(i.qty * i.price)].concat(hasW ? [w] : []);
     });
     var pays = Object.keys(s.payments || {}).filter(function (k) { return U.n(s.payments[k]); }).map(function (k) { return [pmName(k), U.money(s.payments[k])]; });
     var inst = s.instNo ? (Store.db.inst || []).filter(function (c) { return c.no === s.instNo; })[0] : null;

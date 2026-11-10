@@ -19,7 +19,7 @@ const OUT = process.env.SHOTS || '/home/claude/ghandi-home/build/shots';
     const bc = await pg.evaluate(() => Store.db.products.filter(p => p.sellBy === 'm2')[0].barcodes[0]);
     await pg.fill('#scan', bc); await pg.press('#scan', 'Enter'); await pg.waitForTimeout(300);
     await pg.fill('#mL', '3.5'); await pg.fill('#mW', '4'); await pg.waitForTimeout(200); await shot('02_pos_measure'); await pg.click('#mGo'); await pg.waitForTimeout(200);
-    const bc2 = await pg.evaluate(() => Store.db.products[0].barcodes[0]); await pg.fill('#scan', bc2); await pg.press('#scan', 'Enter'); await pg.waitForTimeout(300);
+    const bc2 = await pg.evaluate(() => Store.db.products[0].barcodes[0]); await pg.fill('#scan', bc2); await pg.press('#scan', 'Enter'); await pg.waitForTimeout(300); { const sk = await pg.$('.mask [data-n]'); if (sk) await sk.click(); await pg.waitForTimeout(200); }
     await shot('03_pos_cart');
   });
   await step('inst-form', async () => {
