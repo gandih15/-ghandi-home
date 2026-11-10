@@ -6,7 +6,7 @@ var SLOT_HINTS = [
   ['🗄️', 'g-amethyst', 'مثلاً هارد خارجي أو جهاز تاني', 'e.g. external drive or another PC']
 ];
 function openFolder(p) {
-  if (!IS_NW) return toast(L('فتح الفولدر بيشتغل في نسخة Ghandi.exe', 'Opening folders works in Ghandi.exe'), 'bad');
+  if (!IS_NW) return toast(L('فتح الفولدر بيشتغل في نسخة GhandiHome.exe', 'Opening folders works in GhandiHome.exe'), 'bad');
   try { if (!NODE.fs.existsSync(p)) NODE.fs.mkdirSync(p, { recursive: true }); Desk.openFolder(p); } catch (e) { toast(e.message, 'bad'); }
 }
 function copyText(t) { try { if (IS_NW) Desk.copy(t); else navigator.clipboard.writeText(t); toast(L('اتنسخ ✓', 'Copied ✓'), 'ok'); } catch (e) { } }
@@ -51,7 +51,7 @@ Views.backup = function (el) {
     '<div class="muted small">♻️ ' + ((S().dev && S().dev.keep > 1) ? L('بيتحفظ آخر ', 'Keeps the last ') + S().dev.keep + L(' نسخ في كل مكان', ' copies per place') : L('في كل مكان بيتحفظ آخر نسخة بس — النسخة الجديدة بتحل محل القديمة بعد ما تتأكد إنها سليمة.', 'Each place keeps only the newest copy — it replaces the old one after being verified.')) + '</div>' +
     '<button class="btn pri lg" id="bnow" style="margin-top:6px">💾 ' + L('اعمل نسخة احتياطية دلوقتي', 'Back up now') + '</button><div id="bres" class="row wrap" style="gap:6px"></div></div>' +
     (can('restore') ? '<div class="card col"><h3>♻️ ' + L('استرجاع نسخة', 'Restore') + '</h3>' + (function () { var f = IS_NW ? Backup.findLatest(Backup.slotPaths()) : null; return f ? '<div class="list-row"><div class="grow"><b>' + L('أحدث نسخة لقيناها', 'Newest backup found') + '</b><div class="muted small num">' + U.esc(f.file) + '<br>' + U.dt(f.time) + '</div></div><button class="btn gold" id="bauto">' + L('استرجعها', 'Restore it') + '</button></div>' : ''; })() +
-      '<label class="f">' + L('أو اختار ملف نسخة (.gbk) من أي مكان', 'Or choose a .gbk file from anywhere') + '<input type="file" class="in" id="bfile" accept=".gbk,.json"></label><div class="muted small" style="line-height:1.8">💡 ' + L('لو الويندوز وقع: شغّل Ghandi.exe من نفس البارتيشن أو الفلاشة، وهيدوّر لوحده على أحدث نسخة في كل الأماكن دي ويعرض عليك تسترجعها.', 'After a Windows reinstall: run Ghandi.exe from the same drive and it finds the newest backup in all these places automatically.') + '</div></div>' : '') + '</div>';
+      '<label class="f">' + L('أو اختار ملف نسخة (.gbk) من أي مكان', 'Or choose a .gbk file from anywhere') + '<input type="file" class="in" id="bfile" accept=".gbk,.json"></label><div class="muted small" style="line-height:1.8">💡 ' + L('لو الويندوز وقع: شغّل GhandiHome.exe من نفس البارتيشن أو الفلاشة، وهيدوّر لوحده على أحدث نسخة في كل الأماكن دي ويعرض عليك تسترجعها.', 'After a Windows reinstall: run GhandiHome.exe from the same drive and it finds the newest backup in all these places automatically.') + '</div></div>' : '') + '</div>';
 
   var save = function () { Store.save(); try { localStorage.setItem('ghandi.backupFolders', JSON.stringify(Backup.slotPaths())); } catch (e) { } };
   $('#inOpen').onclick = function () { openFolder(inDir); };
@@ -65,7 +65,7 @@ Views.backup = function (el) {
     if ($('[data-clear]', c)) $('[data-clear]', c).onclick = function () { setPath(''); };
     $('[data-test]', c).onclick = function () {
       var dir = Backup.slotDir(s.path);
-      if (!IS_NW) return toast(L('الاختبار بيشتغل في نسخة Ghandi.exe', 'Testing works in Ghandi.exe'), 'bad');
+      if (!IS_NW) return toast(L('الاختبار بيشتغل في نسخة GhandiHome.exe', 'Testing works in GhandiHome.exe'), 'bad');
       if (!Backup.driveReady(dir)) return toast(L('الفلاشة أو الهارد ده مش متوصل', 'That drive is not connected'), 'bad');
       try { if (!NODE.fs.existsSync(dir)) NODE.fs.mkdirSync(dir, { recursive: true }); var f = NODE.path.join(dir, '.ghandi-test'); NODE.fs.writeFileSync(f, 'ok'); NODE.fs.unlinkSync(f); toast(L('المكان شغّال وينفع نحفظ عليه ✓', 'Location works ✓'), 'ok'); } catch (e) { toast(L('مش قادر أكتب هنا: ', 'Cannot write here: ') + e.message, 'bad'); }
     };

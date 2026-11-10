@@ -29,7 +29,7 @@ var Vault = {
   },
   read: function (file) { var b = NODE.fs.readFileSync(file); return Vault.isSealed(b) ? Vault.open(b) : b.toString('utf8'); }
 };
-var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.4.0', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
+var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.4.1', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
 
 /* ---------- small utils ---------- */
 var U = {
@@ -346,7 +346,7 @@ var Backup = {
     if (b.allUsb) ar.push('', '+ أي فلاشة بتتوصل: فولدر Ghandi-Backup على الفلاشة');
     ar.push('', 'كل ملف اسمه ghandi_السنة الشهر اليوم_الساعة.gbk = نسخة كاملة من البيانات.',
       'للاسترجاع: افتح البرنامج ← النسخ الاحتياطي ← اختر ملف .gbk',
-      'لو الويندوز وقع: شغّل Ghandi.exe من نفس المكان، وهيلاقي آخر نسخة لوحده.', '',
+      'لو الويندوز وقع: شغّل GhandiHome.exe من نفس المكان، وهيلاقي آخر نسخة لوحده.', '',
       'Ghandi Home — Backup locations', '1) Main copy (inside the program folder): ' + Backup.internalDir());
     (b.slots || []).forEach(function (s, i) { ar.push((i + 2) + ') Location ' + (i + 1) + ': ' + (s.path ? Backup.slotDir(s.path) : '(not set)')); });
     ar.push('Restore: Ghandi → Backup → choose a .gbk file.', '', 'Support: ' + APP.devEn + ' — ' + APP.phone);
