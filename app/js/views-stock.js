@@ -175,6 +175,7 @@ Views.products = {
         bcs.forEach(function (b) { ex = ex || Store.byBarcode(b); });
         if (!ex) ex = Store.db.products.filter(function (p) { return U.norm(p.name) === U.norm(o.name) && (!o.shade || U.norm(p.shade) === U.norm(o.shade)); })[0] || null;
         if (ex && !upOK) { skip++; return; }
+        if (typeof PriceGuard !== 'undefined' && PriceGuard.on() && (ep || !ex)) { var gc = (o.cost != null && o.cost !== '') ? U.n(o.cost) : (ex ? U.n(ex.cost) : 0), gp = (ex ? ex.prices.slice() : [0, 0, 0, 0]); ['p0', 'p1', 'p2', 'p3'].forEach(function (k, i) { if (o[k] != null && o[k] !== '') gp[i] = U.n(o[k]); }); var gb = PriceGuard.bad(gp, gc); if (gb) { skip++; (m._below = m._below || []).push(String(o.name) + ' — ' + tierName(gb.t) + ' ' + U.money(gb.v) + ' < ' + U.money(gb.cost)); return; } }
         var p = ex || { id: U.id(), created: Date.now(), barcodes: [], prices: [0, 0, 0, 0], stock: 0, active: true };
         p.name = String(o.name).trim(); if (o.nameEn != null) p.nameEn = String(o.nameEn); if (o.cat) p.cat = String(o.cat).trim(); if (o.brand != null) p.brand = String(o.brand); if (o.shade != null) p.shade = String(o.shade); if (o.sub != null && typeof Subs !== 'undefined') { p.sub = String(o.sub).trim(); if (p.cat && p.sub) { var sa = Subs.all(); sa[p.cat] = sa[p.cat] || []; if (sa[p.cat].indexOf(p.sub) < 0) sa[p.cat].push(p.sub); } }
         if (ep || !ex) { if (o.cost != null && o.cost !== '') p.cost = U.n(o.cost); ['p0', 'p1', 'p2', 'p3'].forEach(function (k, i) { if (o[k] != null && o[k] !== '') p.prices[i] = U.n(o[k]); }); }
@@ -187,7 +188,7 @@ Views.products = {
         else { upd++; if (stOK && o.stock !== '' && o.stock != null) Store.move(p.id, U.n(o.stock) - U.n(p.stock), 'import', 'Excel'); }
         Store.reindex();
       });
-      Store.log('import', add + '/' + upd); Store.save(); Modal.close(m);
+      Store.log('import', add + '/' + upd); Store.save(); Modal.close(m); if (m._below && m._below.length) PriceGuard.block(m._below);
       toast(L('تمت إضافة ', 'Added ') + add + L(' وتحديث ', ', updated ') + upd + (skip ? L(' وتخطي ', ', skipped ') + skip : ''), 'ok'); Views.products.table();
     };
   }

@@ -201,6 +201,7 @@ Views.prices = {
     $$('#xunit button').forEach(function (b) { b.onclick = function () { st.unit = b.dataset.v; $$('#xunit button').forEach(function (x) { x.classList.toggle('on', x === b); }); prev(); }; });
     $('#xgo').onclick = function () {
       var ps = prev(); if (!ps.length || !st.tiers.length) return toast(L('مفيش حاجة تتعدل', 'Nothing to change'), 'bad');
+      if (typeof PriceGuard !== 'undefined' && PriceGuard.on()) { var below = []; ps.forEach(function (p) { var np = p.prices.slice(), nc = U.n(p.cost); st.tiers.forEach(function (t) { var n = calc(p, t); if (t === 'cost') nc = n; else np[t] = n; }); var b = PriceGuard.bad(np, nc); if (b) below.push(pname(p) + ' — ' + tierName(b.t) + ' ' + U.money(b.v) + ' < ' + U.money(b.cost)); }); if (below.length) return PriceGuard.block(below); }
       var nSel = Object.keys(st.sel || {}).length; var label = (nSel ? ps.length + L(' صنف محدد من ', ' selected of ') : '') + (st.scope === 'all' ? L('كل المنتجات', 'All') : st.scope === 'cat' ? st.cats.join('، ') : st.scope === 'brand' ? st.brands.join('، ') : st.pids.length + L(' صنف', ' items')) + ' — ' + $('#xhint span').textContent;
       Modal.confirm(L('هيتم تعديل أسعار ', 'Prices of ') + '<b>' + ps.length + '</b>' + L(' صنف', ' products') + (nSel ? L(' (المحدد بس)', ' (selected only)') : '') + L('. تقدر تتراجع بعدين من زرار "تراجع".', ' will change. You can undo afterwards.'), function () {
         var snap = ps.map(function (p) { return { id: p.id, prices: p.prices.slice(), cost: p.cost }; });
@@ -264,6 +265,7 @@ Views.purchases = {
       var n = $('#qn', m).value.trim(); if (!n) return toast(L('اكتب اسم الصنف', 'Name is required'), 'bad');
       var p = { id: U.id(), created: Date.now(), name: n, nameEn: '', cat: $('#qc', m).value.trim(), brand: $('#qb', m).value.trim(), shade: $('#qs', m).value.trim(), barcodes: [code], cost: $('#qcost', m) ? U.n($('#qcost', m).value) : 0, prices: [0, 0, 0, 0], stock: 0, minStock: U.n($('#qm', m).value), expiry: '', active: true, unit: '' };
       $$('[data-qp]', m).forEach(function (i) { p.prices[+i.dataset.qp] = U.n(i.value); });
+      if (typeof PriceGuard !== 'undefined') { var gb = PriceGuard.bad(p.prices, p.cost); if (gb) return PriceGuard.warn(gb, gb.t === 0 ? $('[data-qp="0"]', m) : $('[data-qp="' + gb.t + '"]', m)); }
       if (p.cat && S().categories.indexOf(p.cat) < 0) S().categories.push(p.cat);
       Views.purchases.lastCat = p.cat;
       Store.db.products.push(p); Store.reindex(); Store.log('product.add', n + ' (receive)'); Store.save(); Modal.close(m); cb(p);
@@ -304,6 +306,7 @@ Views.purchases = {
     $('#pcan').onclick = function () { if (!d.items.length) { V.draft = null; return V.render(el); } Modal.confirm(L('إلغاء الاستلام؟ الأصناف الممسوحة مش هتتحفظ', 'Discard this receipt?'), function () { V.draft = null; V.render(el); }); };
     $('#psave').onclick = function () {
       var items = d.items.filter(function (i) { return i.qty > 0; }); if (!items.length) return toast(L('مفيش كميات', 'No quantities'), 'bad');
+      if (typeof PriceGuard !== 'undefined' && PriceGuard.on()) { var below = []; items.forEach(function (i) { var p = Store.product(i.pid); if (!p) return; var nc = vc && d.updCost && i.cost ? U.n(i.cost) : U.n(p.cost), np = p.prices.slice(); if (ep && d.updPrice) (i.prices || [i.price]).forEach(function (v, t) { v = U.n(v); if (t === 0 && !v) return; np[t] = v; }); var b = PriceGuard.bad(np, nc); if (b) below.push(pname(p) + ' — ' + tierName(b.t) + ' ' + U.money(b.v) + ' < ' + U.money(b.cost)); }); if (below.length) return PriceGuard.block(below); }
       var t = U.r2(items.reduce(function (s, i) { return s + i.qty * i.cost; }, 0)); db.seq.purchase++;
       var rec = { id: U.id(), no: db.seq.purchase, date: Date.now(), supplier: d.supplier, ref: d.ref, items: items.map(function (i) { return { pid: i.pid, qty: i.qty, cost: i.cost }; }), total: t, paid: U.n(d.paid), note: d.note, by: App.user.name };
       items.forEach(function (i) {
