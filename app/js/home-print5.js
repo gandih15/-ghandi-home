@@ -36,7 +36,7 @@ var DocTxt = {
   }
 };
 (function () {
-  var css = A4.css; A4.css = function () { return css.apply(this, arguments) + '.a4{position:relative;overflow:hidden}html,body{overflow:hidden}.ftx{position:absolute;z-index:5;white-space:nowrap;line-height:1.4}'; };
+  var css = A4.css; A4.css = function () { return css.apply(this, arguments) + '.a4{position:relative;overflow:hidden}.ftx{position:absolute;z-index:5;white-space:nowrap;line-height:1.4}'; };
   var inv = A4.invoice; A4.invoice = function () { return DocTxt.inject(inv.apply(this, arguments)); };
   var qh = Quote.html; Quote.html = function () { return DocTxt.inject(qh.apply(this, arguments)); };
   var rnd = DocLive.render;

@@ -5,13 +5,13 @@
 
 !define APPNAME "Ghandi Home"
 !define APPAR "غاندي للأدوات المنزلية"
-!define VERSION "1.9.3"
-!define VERTXT "1.9.3"
+!define VERSION "1.9.4"
+!define VERTXT "1.9.4"
 !define PUBLISHER "Eng. Mohamed Ali - 01098811581"
 !define UNKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GhandiHome"
 
 Name "تحديث ${APPAR} — الإصدار ${VERTXT}"
-OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Update-1.9.3.exe"
+OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Update-1.9.4.exe"
 InstallDir "C:\GhandiHome"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
