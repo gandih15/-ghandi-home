@@ -6,12 +6,12 @@
 
 !define APPNAME "Ghandi Home"
 !define APPAR "غاندي للأدوات المنزلية"
-!define VERSION "1.8.2"
+!define VERSION "1.8.3"
 !define PUBLISHER "Eng. Mohamed Ali - 01098811581"
 !define UNKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GhandiHome"
 
 Name "${APPAR} — ${APPNAME}"
-OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Setup-1.8.2.exe"
+OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Setup-1.8.3.exe"
 InstallDir "C:\GhandiHome"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
@@ -84,6 +84,7 @@ Section "Ghandi" SecMain
   CreateDirectory "$INSTDIR\data\backups"
   ; make sure the shop user (not only the admin) can write data & backups
   nsExec::Exec 'icacls "$INSTDIR\data" /grant *S-1-5-32-545:(OI)(CI)M /T /Q'
+  nsExec::Exec 'icacls "$INSTDIR\resources" /grant *S-1-5-32-545:(OI)(CI)M /T /Q'
   WriteUninstaller "$INSTDIR\Uninstall-GhandiHome.exe"
 
   CreateShortCut "$DESKTOP\${APPAR}.lnk" "$INSTDIR\GhandiHome.exe" "" "$INSTDIR\GhandiHome.exe" 0 SW_SHOWMAXIMIZED "" "Ghandi Home"

@@ -107,3 +107,102 @@ var PosOrder = {
     return r;
   };
 })();
+
+/* ================= what each account sees on the home screen (admin decides per user) ================= */
+var DASH = [
+  ['alerts', '🔔 التنبيهات (أقساط، توصيلات، تركيبات…)', function (r) { return [$('.home-alerts', r)]; }],
+  ['mysales', '💰 كارت «مبيعاتي»', function (r) { return [$('.us-card', r)]; }],
+  ['usall', '👥 مبيعات كل الحسابات', function (r) { return [$('.us-card .us-all', r)]; }],
+  ['hero', '🌙 الترحيب ومبيعات النهارده', function (r) { return [$('section.hero', r)]; }],
+  ['hero.profit', '💰 ربح النهارده', function (r) { return $$('section.hero .mini > div', r).filter(function (d) { return /ربح|Profit/.test(d.textContent); }); }],
+  ['extra', '📲 أزرار تقرير اليوم وطلب النواقص', function (r) { return [$('.dash-extra', r)]; }],
+  ['quick', '⚡ الأزرار السريعة', function (r) { return [$('.quick', r)]; }],
+  ['kpi.sales', '📅 مبيعات الشهر', function (r) { return DashSec.kpi(r, /مبيعات الشهر|Month sales/); }],
+  ['kpi.profit', '💎 أرباح الشهر', function (r) { return DashSec.kpi(r, /أرباح الشهر|Profit/); }],
+  ['kpi.stock', '📦 قيمة البضاعة', function (r) { return DashSec.kpi(r, /قيمة البضاعة|قيمة المخزون|Stock value/); }],
+  ['kpi.avg', '🧮 متوسط الفاتورة', function (r) { return DashSec.kpi(r, /متوسط الفاتورة|Average invoice/); }],
+  ['chart', '📈 رسم المبيعات', function (r) { return DashSec.card(r, /المبيعات —|Sales —/); }],
+  ['top', '🏆 الأكثر مبيعاً', function (r) { return DashSec.card(r, /الأكثر مبيع|Top sell/); }],
+  ['low', '🚨 النواقص', function (r) { return DashSec.card(r, /نواقص|Low stock/); }],
+  ['exp', '⏳ قرب انتهاء الصلاحية', function (r) { return DashSec.card(r, /صلاحيت|Expir/); }]
+];
+var DashSec = {
+  kpi: function (r, re) { return $$('.card.kpi', r).filter(function (c) { var l = $('.l', c); return l && re.test(l.textContent); }); },
+  card: function (r, re) { return $$('.card', r).filter(function (c) { var h = $(':scope > h3', c); return h && re.test(h.textContent); }); },
+  ok: function (k) { if (!App.user || App.user.role === 'admin' || App.user.dev) return true; var v = (App.user.perms || {})['dash.' + k]; return v !== false; },
+  apply: function (r) {
+    DASH.forEach(function (d) { if (DashSec.ok(d[0])) return; (d[2](r) || []).forEach(function (x) { if (x) x.remove(); }); });
+    $$('.grid', r).forEach(function (g) { if (g.parentNode === r && !g.children.length) g.remove(); });
+  }
+};
+(function () {
+  // permissions: a group for the home screen (checked = shown)
+  PERMS.push(['g', '🏠 الرئيسية — يظهرله إيه', 'Home screen — what this user sees']);
+  DASH.forEach(function (d) { PERMS.push(['dash.' + d[0], d[1], d[1]]); });
+  var fill = function (o) { DASH.forEach(function (d) { if (o['dash.' + d[0]] === undefined) o['dash.' + d[0]] = true; }); return o; };
+  Object.keys(ROLE_PRESETS).forEach(function (k) { var f = ROLE_PRESETS[k]; ROLE_PRESETS[k] = function () { var o = f.apply(this, arguments); DASH.forEach(function (d) { o['dash.' + d[0]] = true; }); return o; }; });
+  var ue = Views.users.edit;
+  Views.users.edit = function (u) { if (u && u.perms) fill(u.perms); return ue.apply(this, arguments); };
+  // average invoice tile
+  var db0 = Views.dashboard;
+  Views.dashboard = function (el) {
+    var r = db0.apply(this, arguments);
+    try {
+      var g = $$('.grid', el).filter(function (x) { return $('.card.kpi', x); })[0];
+      if (g && !DashSec.kpi(el, /متوسط الفاتورة/).length) {
+        var m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
+        var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+        var mine = App.user.role !== 'admin' && !App.user.dev && !can('shifts.all');
+        var ss = Store.db.sales.filter(function (s) { return s.type === 'sale' && !s.void && s.date >= m0.getTime() && (!mine || s.user === App.user.id); });
+        var tt = ss.filter(function (s) { return s.date >= t0.getTime(); });
+        var avg = function (a) { return a.length ? a.reduce(function (x, s) { return x + U.n(s.total); }, 0) / a.length : 0; };
+        var c = document.createElement('div'); c.className = 'card kpi';
+        c.innerHTML = '<div class="ic"><span class="gem g-sapphire">🧮</span></div><div class="l">' + L('متوسط الفاتورة', 'Average invoice') + '</div><div class="v"><span class="num">' + U.money(avg(ss)) + '</span> <small class="muted">' + cur() + '</small></div><div class="muted small">' + L('النهارده: ', 'Today: ') + U.money(avg(tt)) + ' · ' + ss.length + L(' فاتورة الشهر', ' invoices this month') + '</div>';
+        g.appendChild(c); g.classList.remove('g3'); g.classList.add('g4');
+      }
+      DashSec.apply(el);
+      if (typeof Eye !== 'undefined') { Eye.scan(el); }
+    } catch (e) { console.error(e); }
+    return r;
+  };
+})();
+
+/* ================= developer: go back to any version ================= */
+var VerLib = {
+  card: function () {
+    var c = document.createElement('div'); c.className = 'card col'; c.id = 'dvVer'; c.style.gridColumn = '1 / -1';
+    c.innerHTML = '<h3>🕘 ' + L('الإصدارات — ارجع لأي إصدار', 'Versions — go back to any version') + '</h3><div id="vlList" class="col"><div class="muted small">…</div></div>' +
+      '<div class="row wrap" style="gap:8px"><button class="btn" id="vlImp">📥 ' + L('إضافة إصدار من ملف (.asar)', 'Add a version file (.asar)') + '</button><button class="btn ghost" id="vlRef">↻</button></div>' +
+      '<div class="muted small">' + L('كل إصدار بيشتغل على الجهاز ده بيتحفظ لوحده هنا، ومعاه الإصدار اللي كان قبل كل تحديث. لما ترجع لإصدار: البيانات بتتحفظ الأول، البرنامج يتقفل ويفتح تاني بالإصدار اللي اخترته، وكل المبيعات والإعدادات والتفعيل زي ما هي. ⚠️ الإصدارات الأقدم من 1.8.3 مفيهاش الصفحة دي — عشان ترجع منها لإصدار أحدث شغّل ملف التحديث بتاعه.', 'Every version that ran here is kept. Switching saves the data first, restarts on the chosen version and keeps all data. Versions before 1.8.3 do not have this page — use an update file to move forward again.') + '</div>';
+    var draw = function () {
+      var box = $('#vlList', c);
+      if (!IS_ELECTRON) { box.innerHTML = '<div class="muted small">' + L('متاح في برنامج الويندوز بس.', 'Available in the Windows app only.') + '</div>'; return; }
+      IPC.invoke('versions').then(function (r) {
+        var cmp = function (a, b) { var x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (var i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (y[i] || 0) - (x[i] || 0); } return 0; };
+        var list = (r.list || []).sort(function (a, b) { return cmp(a.v, b.v); });
+        if (!list.some(function (x) { return x.v === r.current; })) list.unshift({ v: r.current, size: 0, t: 0 });
+        box.innerHTML = list.map(function (x) { var me = x.v === r.current; return '<div class="list-row"><div class="grow"><b class="num">v' + U.esc(x.v) + '</b> ' + (me ? '<span class="chip ok">' + L('الشغّال دلوقتي', 'Running now') + '</span>' : '') + '<div class="muted small">' + (x.t ? U.dt(x.t) + ' · ' : '') + (x.size ? (x.size / 1048576).toFixed(1) + ' MB' : '') + '</div></div>' + (me ? '' : '<button class="btn sm pri" data-vu="' + U.esc(x.v) + '">↩️ ' + L('ارجع للإصدار ده', 'Switch to this') + '</button>') + (x.size ? '<button class="btn sm ghost" data-ve="' + U.esc(x.v) + '" title="' + L('احفظ نسخة من الإصدار على فلاشة', 'Save a copy') + '">💾</button>' : '') + '</div>'; }).join('') || '<div class="muted small">—</div>';
+        $$('[data-vu]', box).forEach(function (b) { b.onclick = function () { VerLib.use(b.dataset.vu); }; });
+        $$('[data-ve]', box).forEach(function (b) { b.onclick = function () { IPC.invoke('exportVersion', b.dataset.ve).then(function (x) { if (x.ok) toast('💾 ' + x.path, 'ok'); else if (x.error !== 'cancelled') toast(x.error, 'bad'); }); }; });
+      });
+    };
+    $('#vlImp', c).onclick = function () { if (!IS_ELECTRON) return; IPC.invoke('importVersion').then(function (x) { if (x.ok) { toast('📥 v' + x.v, 'ok'); draw(); } else if (x.error !== 'cancelled') toast(x.error, 'bad'); }); };
+    $('#vlRef', c).onclick = draw; draw();
+    return c;
+  },
+  use: function (v) {
+    Modal.confirm('↩️ ' + L('ترجع لإصدار ', 'Switch to version ') + '<b>v' + U.esc(v) + '</b>' + L('؟<br>البيانات هتتحفظ والبرنامج هيتقفل ويفتح تاني لوحده.', '?<br>Data is saved and the app restarts.'), function () {
+      try { Store.log('dev.version', APP.version + ' → ' + v); Store.saveNow(); if (typeof Backup !== 'undefined' && Backup.run) Backup.run('pre-version'); } catch (e) { }
+      IPC.invoke('useVersion', v).then(function (r) { if (!r.ok) toast(r.error || 'error', 'bad'); else toast('↩️ v' + v + ' …', 'ok'); });
+    });
+  }
+};
+(function () {
+  var dv = Views.dev;
+  Views.dev = function (el) {
+    var r = dv.apply(this, arguments); if (!Dev.unlocked) return r;
+    var top = $('#dvTop', el); var c = VerLib.card();
+    if (top) top.appendChild(c); else el.appendChild(c);
+    return r;
+  };
+})();

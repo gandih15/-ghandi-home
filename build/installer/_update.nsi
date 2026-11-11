@@ -5,13 +5,13 @@
 
 !define APPNAME "Ghandi Home"
 !define APPAR "غاندي للأدوات المنزلية"
-!define VERSION "1.8.2"
-!define VERTXT "1.8.2"
+!define VERSION "1.8.3"
+!define VERTXT "1.8.3"
 !define PUBLISHER "Eng. Mohamed Ali - 01098811581"
 !define UNKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GhandiHome"
 
 Name "تحديث ${APPAR} — الإصدار ${VERTXT}"
-OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Update-1.8.2.exe"
+OutFile "/home/claude/ghandi-home/dist/Ghandi-Home-Update-1.8.3.exe"
 InstallDir "C:\GhandiHome"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
@@ -93,7 +93,11 @@ Section "Update"
     MessageBox MB_ICONSTOP "حصلت مشكلة أثناء نسخ الملفات — البرنامج رجع زي ما كان. قفل البرنامج وجرّب تاني."
     Abort
   ${EndIf}
+  CreateDirectory "$INSTDIR\data\versions"
+  Delete "$INSTDIR\data\versions\_prev.asar"
+  Rename "$INSTDIR\resources\app.asar.old" "$INSTDIR\data\versions\_prev.asar"
   Delete "$INSTDIR\resources\app.asar.old"
+  nsExec::Exec 'icacls "$INSTDIR\resources" /grant *S-1-5-32-545:(OI)(CI)M /T /Q'
   nsExec::Exec 'icacls "$INSTDIR\data" /grant *S-1-5-32-545:(OI)(CI)M /T /Q'
   WriteRegStr HKLM "${UNKEY}" "DisplayVersion" "${VERSION}"
   WriteRegStr HKLM "${UNKEY}" "InstallLocation" "$INSTDIR"

@@ -1,0 +1,26 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const OUT = '/home/claude/ghandi-home/build/shots/eye';
+(async () => {
+  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
+  const pg = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message + ' ' + (e.stack || '').split('\n')[1]));
+  const login = async (u, pw) => { await pg.selectOption('#lu', u); await pg.fill('#lp', pw); await pg.click('#lb'); await pg.waitForTimeout(1500); await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); go('dashboard'); }); await pg.waitForTimeout(800); };
+  const logout = async () => { await pg.evaluate(() => { Store.saveNow(); App.user = null; Gate.login(); }); await pg.waitForTimeout(800); };
+  await pg.goto('file:///home/claude/ghandi-home/app/index.html?demo&reset'); await pg.waitForTimeout(2500);
+  await login('u1', '1234');
+  console.log('avg tile:', await pg.evaluate(() => !!DashSec.kpi(document.querySelector('#view'), /متوسط الفاتورة/).length));
+  await pg.evaluate(() => { go('users'); Views.users.edit(Store.db.users.find(x => x.id === 'u2'), document.querySelector('#view')); }); await pg.waitForTimeout(500);
+  console.log('perm group defaults checked:', await pg.evaluate(() => [...document.querySelectorAll('[data-k^="dash."]')].map(i => i.checked).every(Boolean) + ' n=' + document.querySelectorAll('[data-k^="dash."]').length));
+  for (const k of ['top', 'kpi.avg', 'usall', 'hero.profit']) await pg.evaluate(k => { var i = document.querySelector('[data-k="dash.' + k + '"]'); i.click(); }, k);
+  await pg.evaluate(() => { var i = document.querySelector('[data-k="dash.top"]'); i.scrollIntoView({ block: 'center' }); }); await pg.screenshot({ path: OUT + '/20_perms_home.png' });
+  await pg.evaluate(() => { var b = [...document.querySelectorAll('.mask .btn.pri')].pop(); b.click(); }); await pg.waitForTimeout(500);
+  console.log('saved perms:', await pg.evaluate(() => { var p = Store.db.users.find(x => x.id === 'u2').perms; return [p['dash.top'], p['dash.kpi.avg'], p['dash.usall'], p['dash.chart']].join(','); }));
+  await logout(); await login('u2', '1111');
+  const seen = await pg.evaluate(() => { var r = document.querySelector('#view'); return { top: DashSec.card(r, /الأكثر مبيع/).length, avg: DashSec.kpi(r, /متوسط/).length, usall: !!r.querySelector('.us-all'), chart: DashSec.card(r, /المبيعات —/).length, profit: [...r.querySelectorAll('section.hero .mini > div')].filter(d => /ربح/.test(d.textContent)).length }; });
+  console.log('cashier sees:', JSON.stringify(seen));
+  await pg.screenshot({ path: OUT + '/21_cashier_home.png', fullPage: true });
+  await logout(); await login('u1', '1234');
+  await pg.evaluate(() => { Dev.unlocked = true; go('dev'); }); await pg.waitForTimeout(600);
+  console.log('versions card:', await pg.evaluate(() => !!document.querySelector('#dvTop #dvVer')));
+  console.log('ERRORS:', errs.length ? errs.join('\n') : 'none'); await b.close();
+})();

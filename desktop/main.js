@@ -153,3 +153,57 @@ if ([GRaw]::Kick($p)) { "OK" } else { "FAIL" }
     resolve({ ok: !err && /OK/.test(String(out)), error: err ? err.message : (/OK/.test(String(out)) ? '' : 'printer') });
   });
 }));
+
+/* ---------- version library: every version that ran here is kept, the developer can go back to any of them ---------- */
+const ofs = (() => { try { return require('original-fs'); } catch (e) { return fs; } })();
+const ASAR = __dirname; // …\resources\app.asar
+const VERS = path.join(DATA, 'versions');
+const asarVer = (p) => { try { return JSON.parse(fs.readFileSync(path.join(p, 'package.json'), 'utf8')).version || ''; } catch (e) { return ''; } };
+function archiveVersions() {
+  try {
+    if (!/\.asar$/i.test(ASAR)) return; // running unpacked (development)
+    ofs.mkdirSync(VERS, { recursive: true });
+    const me = app.getVersion(), mine = path.join(VERS, me + '.asar');
+    if (!ofs.existsSync(mine)) ofs.copyFileSync(ASAR, mine);
+    const prev = path.join(VERS, '_prev.asar'); // left by the update package
+    if (ofs.existsSync(prev)) { const v = asarVer(prev); const dst = path.join(VERS, (v || 'old-' + Date.now()) + '.asar'); if (v && v !== me && !ofs.existsSync(dst)) ofs.renameSync(prev, dst); else ofs.unlinkSync(prev); }
+  } catch (e) { }
+}
+app.whenReady().then(() => setTimeout(archiveVersions, 4000));
+ipcMain.handle('versions', async () => {
+  try {
+    ofs.mkdirSync(VERS, { recursive: true });
+    return { current: app.getVersion(), list: ofs.readdirSync(VERS).filter(n => /\.asar$/i.test(n) && n !== '_prev.asar').map(n => { const st = ofs.statSync(path.join(VERS, n)); return { v: n.replace(/\.asar$/i, ''), size: st.size, t: st.mtimeMs }; }) };
+  } catch (e) { return { current: app.getVersion(), list: [], error: e.message }; }
+});
+ipcMain.handle('importVersion', async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'اختار ملف إصدار غاندي (.asar)', filters: [{ name: 'Ghandi version', extensions: ['asar'] }], properties: ['openFile'] });
+  if (r.canceled || !r.filePaths[0]) return { ok: false, error: 'cancelled' };
+  const src = r.filePaths[0], v = asarVer(src);
+  if (!v) return { ok: false, error: 'الملف ده مش إصدار غاندي' };
+  try { ofs.mkdirSync(VERS, { recursive: true }); ofs.copyFileSync(src, path.join(VERS, v + '.asar')); return { ok: true, v }; } catch (e) { return { ok: false, error: e.message }; }
+});
+ipcMain.handle('exportVersion', async (ev, v) => {
+  const src = path.join(VERS, String(v).replace(/[\\/:*?"<>|]/g, '') + '.asar'); if (!ofs.existsSync(src)) return { ok: false, error: 'not found' };
+  const r = await dialog.showSaveDialog(win, { title: 'حفظ نسخة من الإصدار', defaultPath: 'Ghandi-Home-' + v + '.asar', filters: [{ name: 'Ghandi version', extensions: ['asar'] }] });
+  if (r.canceled || !r.filePath) return { ok: false, error: 'cancelled' };
+  try { ofs.copyFileSync(src, r.filePath); return { ok: true, path: r.filePath }; } catch (e) { return { ok: false, error: e.message }; }
+});
+ipcMain.handle('useVersion', async (ev, v) => {
+  try {
+    const src = path.join(VERS, String(v).replace(/[\\/:*?"<>|]/g, '') + '.asar');
+    if (!ofs.existsSync(src) || !asarVer(src)) return { ok: false, error: 'الإصدار ده مش موجود' };
+    if (!/\.asar$/i.test(ASAR)) return { ok: false, error: 'dev mode' };
+    // keep the running version too, so you can come back to it
+    const me = path.join(VERS, app.getVersion() + '.asar'); if (!ofs.existsSync(me)) ofs.copyFileSync(ASAR, me);
+    // test that we can write next to the program
+    const probe = path.join(path.dirname(ASAR), 'ghandi-write-test.tmp'); ofs.writeFileSync(probe, 'x'); ofs.unlinkSync(probe);
+    const bat = path.join(DATA, 'profile', 'switch-version.cmd');
+    const q = (s) => '"' + s + '"';
+    fs.writeFileSync(bat, ['@echo off', 'chcp 65001 > nul', 'ping 127.0.0.1 -n 4 > nul', 'taskkill /F /IM ' + path.basename(process.execPath) + ' > nul 2>&1', 'ping 127.0.0.1 -n 2 > nul',
+      'copy /y ' + q(src) + ' ' + q(ASAR) + ' > nul', 'start "" ' + q(process.execPath), 'del "%~f0"'].join('\r\n'), 'utf8');
+    require('child_process').spawn('cmd.exe', ['/c', bat], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    setTimeout(() => { try { app.exit(0); } catch (e) { } }, 1200);
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.code === 'EPERM' || e.code === 'EACCES' ? 'مفيش صلاحية كتابة في فولدر البرنامج — شغّل البرنامج كمسؤول (Run as administrator) مرة وجرّب تاني' : e.message }; }
+});
