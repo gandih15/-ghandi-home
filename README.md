@@ -14,7 +14,8 @@
 | `Ghandi-Home-Setup-1.5.0.exe` | النسخة الكاملة لأي معرض جديد |
 | `Ghandi-Home-Update-1.5.0.exe` | تحديث للمعارض اللي عندها إصدار قديم (بيحافظ على البيانات والتفعيل) |
 | `Ghandi-Home-Keygen-OWNER-ONLY.html` | مولّد أكواد التفعيل — للمطوّر بس |
-| `Ghandi-Home-دليل-التسطيب-والتفعيل-والاستخدام.pdf` | لصاحب المحل |
+| `دليل-صاحب-المحل-غاندي-للأدوات-المنزلية.pdf` | لصاحب المحل — الشرح الكامل بالصور (57 صفحة) |
+| `Ghandi-Home-دليل-التسطيب-والتفعيل-والاستخدام.pdf` | دليل مختصر |
 
 > 🔒 المستودع ده لازم يفضل **Private** — فيه المولّد والمفاتيح السرية (`build/keys.json`، `build/dev-cred.json`).
 
@@ -58,6 +59,9 @@ LANG=C.UTF-8 node build/build-desktop.js win32
 بيطلع في `dist/`: `Ghandi-Home-Setup-X.exe` (كامل) و`Ghandi-Home-Update-X.exe` (تحديث صغير بيحافظ على البيانات والتفعيل).
 
 ⚠️ ماتشغّلش `make-keys.js --force` — بيعمل مفاتيح جديدة وكل أكواد التفعيل القديمة تبطل.
+
+## 📘 دليل صاحب المحل
+`node build/manual/shoot.js` (صور الشاشات بالأرقام) ثم `node build/manual/firstrun.js` (التفعيل والدخول) ثم `node build/manual/build.js` (يطلع الـ PDF في releases). الشرح والأرقام في `build/manual/spec.js`.
 
 ## 🧪 الاختبارات
 `node build/hometest.js` (كل شاشات المعرض) و `node build/extra11test.js` (مميزات 1.1) و `node build/designtest.js` (الـ 30 تصميم) و `node build/suptest.js` (حسابات الموردين) و `node build/printtest.js` (الطباعة والتصفير) و `node build/custtest.js` (بيانات العميل) و `node build/a4test.js` (كل مستندات A4).

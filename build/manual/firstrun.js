@@ -1,0 +1,42 @@
+// activation, login and first-login screens for the guide (annotated)
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const fs = require('fs'), path = require('path'), OUT = path.join(__dirname, 'img');
+const MARK = ({ marks, modal }) => {
+  document.querySelectorAll('.mk-ov').forEach(x => x.remove());
+  var root = modal ? [...document.querySelectorAll('.mask .modal, .mask > div')].pop() || document : document;
+  var vis = e => { var r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 2 && r.height > 2 && cs.visibility !== 'hidden' && cs.display !== 'none' && r.bottom > 0 && r.top < innerHeight; };
+  var find = t => { if (t.startsWith('t:')) { var s = t.slice(2), best = null, ba = 1e12; root.querySelectorAll('*').forEach(e => { if (!vis(e)) return; var tx = (e.innerText || e.value || '').trim(); if (tx.indexOf(s) < 0) return; var r = e.getBoundingClientRect(), a = r.width * r.height; if (a < ba) { ba = a; best = e; } }); return best; } return [...root.querySelectorAll(t)].filter(vis)[0]; };
+  var out = [], miss = [], n = 0, used = [];
+  marks.forEach(m => { var e = find(m[0]); if (!e) { miss.push(m[0]); return; } n++; var r = e.getBoundingClientRect();
+    var box = document.createElement('div'); box.className = 'mk-ov'; box.style.cssText = 'position:fixed;z-index:2147483646;pointer-events:none;border:2.5px solid #e11d48;border-radius:8px;box-shadow:0 0 0 3px rgba(225,29,72,.18);left:' + (r.left - 4) + 'px;top:' + (r.top - 4) + 'px;width:' + (r.width + 8) + 'px;height:' + (r.height + 8) + 'px';
+    var x = Math.min(innerWidth - 34, Math.max(4, r.right - 6)), y = Math.max(4, r.top - 16); used.forEach(u => { if (Math.abs(u[0] - x) < 30 && Math.abs(u[1] - y) < 30) y += 32; }); used.push([x, y]);
+    var c = document.createElement('div'); c.className = 'mk-ov'; c.textContent = n; c.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;width:30px;height:30px;border-radius:50%;background:#e11d48;color:#fff;font:800 16px Tahoma,Arial;display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35);left:' + x + 'px;top:' + y + 'px';
+    document.body.appendChild(box); document.body.appendChild(c); out.push({ n: n, title: m[1], text: m[2] }); });
+  var mr = modal && root.getBoundingClientRect ? root.getBoundingClientRect() : null;
+  return { marks: out, miss: miss, clip: mr ? { x: Math.max(0, mr.left - 10), y: Math.max(0, mr.top - 10), width: Math.min(innerWidth, mr.width + 20), height: Math.min(innerHeight, mr.height + 20) } : null };
+};
+(async () => {
+  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.4 });
+  const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  const res = JSON.parse(fs.readFileSync(path.join(__dirname, 'marks.json'), 'utf8'));
+  const shot = async (id, marks, modal) => { await pg.waitForTimeout(300); const r = await pg.evaluate(MARK, { marks, modal }); if (r.miss.length) console.log('MISSING', id, r.miss); await pg.waitForTimeout(100); await pg.screenshot({ path: OUT + '/' + id + '.jpg', type: 'jpeg', quality: 80, clip: r.clip || undefined }); await pg.evaluate(() => document.querySelectorAll('.mk-ov').forEach(x => x.remove())); res[id] = r.marks; };
+  await pg.goto('file:///home/claude/ghandi-home/app/index.html'); await pg.waitForTimeout(2500);
+  const fp = await pg.evaluate(() => License.fingerprint());
+  const kg = await ctx.newPage(); await kg.goto('file:///home/claude/ghandi-home/owner-tools/Ghandi-Home-Keygen.html'); await kg.waitForTimeout(500);
+  const txt = await kg.evaluate(async fp => { document.getElementById('fp').value = fp; document.getElementById('d').value = '365'; document.getElementById('go').click(); await new Promise(r => setTimeout(r, 700)); return (document.getElementById('out') || document.body).innerText; }, fp);
+  const code = (txt.match(/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/) || [])[0]; await kg.close();
+  await pg.fill('#key', code);
+  await shot('activation', [['t:' + fp.slice(0, 5), 'بصمة الجهاز', 'رقم خاص بجهازك. ابعته للمطوّر (واتساب) عشان يعملك كود التفعيل.'], ['#cp', 'نسخ البصمة', 'ينسخها عشان تلزقها في الواتساب على طول.'], ['#key', 'كود التفعيل', 'الكود اللي هيوصلك من المطوّر.'], ['#act', 'تفعيل', 'البرنامج بيتفعّل على الجهاز ده بس وللمدة المحددة.'], ['#lg', 'اللغة', 'عربي / English.']]);
+  await pg.click('#act'); await pg.waitForTimeout(2500);
+  console.log('LOGIN:', await pg.evaluate(() => [...document.querySelectorAll('input,button')].filter(e => e.offsetParent).map(e => (e.id ? '#' + e.id : '') + '[' + (e.innerText || e.placeholder || '').trim().slice(0, 30) + ']').join(' | ')));
+  await shot('login', [['#lu', 'المستخدم', 'اختار اسمك من القائمة — أول مرة هتلاقي «المدير» بس، وبعد كده كل موظف باسمه.'], ['#lp', 'كلمة السر', 'أول مرة: 1234، والبرنامج هيطلب منك تغيّرها على طول.'], ['#lb', 'دخول', ''], ['t:01098811581', 'الدعم', 'رقم المطوّر للدعم الفني.']]);
+  await pg.fill('#lp', '1234'); await pg.click('#lb'); await pg.waitForTimeout(1500);
+  console.log('AFTER:', await pg.evaluate(() => [...document.querySelectorAll('.mask input,.mask button')].filter(e => e.offsetParent).map(e => (e.id ? '#' + e.id : '') + '[' + (e.innerText || e.placeholder || '').trim().slice(0, 30) + ']').join(' | ')));
+  await shot('first_pass', [['#np', 'كلمة سر جديدة', 'اختار كلمة سر محدش يعرفها.'], ['#np2', 'تأكيدها', 'اكتبها تاني.'], ['#nps', 'حفظ', 'من هنا ورايح هتدخل بيها.']], true);
+  await pg.fill('#np', '4321'); await pg.fill('#np2', '4321'); await pg.click('#nps'); await pg.waitForTimeout(1500);
+  console.log('NEXT:', await pg.evaluate(() => (document.querySelector('.mask') ? 'MODAL ' + document.querySelector('.mask').innerText.slice(0, 120) : 'VIEW ' + App.view)));
+  await pg.screenshot({ path: OUT + '/raw_after_pass.jpg', type: 'jpeg', quality: 70 });
+  fs.writeFileSync(path.join(__dirname, 'marks.json'), JSON.stringify(res, null, 1));
+  console.log('errors', errs.join(' | ') || 'none'); await b.close();
+})();
