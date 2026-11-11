@@ -36,7 +36,7 @@ var DocTxt = {
   }
 };
 (function () {
-  var css = A4.css; A4.css = function () { return css.apply(this, arguments) + '.a4{position:relative}.ftx{position:absolute;z-index:5;white-space:nowrap;line-height:1.4}'; };
+  var css = A4.css; A4.css = function () { return css.apply(this, arguments) + '.a4{position:relative;overflow:hidden}html,body{overflow:hidden}.ftx{position:absolute;z-index:5;white-space:nowrap;line-height:1.4}'; };
   var inv = A4.invoice; A4.invoice = function () { return DocTxt.inject(inv.apply(this, arguments)); };
   var qh = Quote.html; Quote.html = function () { return DocTxt.inject(qh.apply(this, arguments)); };
   var rnd = DocLive.render;
@@ -73,5 +73,17 @@ var DocTxt = {
     $$('#lvK [data-k]', m).forEach(function (b) { b.addEventListener('click', function () { setTimeout(drawTx, 0); }); });
     var tsel = $('#lvT', m); if (tsel) tsel.addEventListener('change', function () { setTimeout(drawTx, 0); });
     drawTx();
+  };
+})();
+/* one click: content fills the sheet (small safe margin the printer can still print) */
+(function () {
+  var ext = DocSet.extend;
+  DocSet.extend = function (cur) {
+    ext.apply(this, arguments);
+    var mi = $('#lvM', cur.m); if (!mi || $('#lvFit', cur.m)) return;
+    var b = document.createElement('button'); b.className = 'btn sm'; b.id = 'lvFit'; b.style.marginTop = '6px'; b.textContent = '📐 ' + L('على قد الورقة بالظبط', 'Fill the sheet');
+    b.title = L('هامش 4 مم بس — أقل من كده أغلب الطابعات بتقص الأطراف', '4 mm margin — most printers cut anything closer');
+    b.onclick = function () { cur.w.margin = 4; mi.value = 4; cur.draw(); toast('📐 ' + L('الفاتورة بقت على قد الورقة', 'Now fills the sheet'), 'ok'); };
+    var lab = mi.closest('label'); (lab && lab.parentNode ? lab.parentNode.parentNode : mi.parentNode).insertBefore(b, lab ? lab.parentNode.nextSibling : null);
   };
 })();

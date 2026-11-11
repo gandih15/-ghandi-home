@@ -39,7 +39,7 @@ var DocLbl = function (k) { return lang() === 'en' ? ({ saleTitle: 'Sales invoic
     var d = docCfg(), sh = d.show, f = U.n(d.font) || 100;
     tpl = tpl || d.tpl[A4.kindNow || 'other'] || 'classic';
     var size = { A4: 'A4', A5: 'A5', Letter: 'letter' }[d.paper] || 'A4';
-    return css0.apply(this, arguments).replace(/@page\{[^}]*\}/, '@page{size:' + size + ';margin:' + (U.n(d.margin) || 10) + 'mm}') + A4.tplCss(tpl) +
+    return css0.apply(this, arguments).replace(/@page\{[^}]*\}/, '@page{size:' + size + ';margin:' + (String(d.margin) === '0' ? 0 : (U.n(d.margin) || 10)) + 'mm}') + A4.tplCss(tpl) +
       'body{zoom:' + (f / 100) + '}' + (sh.logo ? '' : '.a4h .shop img{display:none}') + (sh.shop ? '' : '.a4h .sm{display:none}') + (sh.words ? '' : '.words{visibility:hidden}') + (sh.terms ? '' : '.terms{display:none}') + (sh.sign ? '' : '.sign{display:none}') + (sh.foot ? '' : '.ft{display:none}') +
       '.sign small.nm{display:block;font-weight:400;margin-top:3px;color:#333}' + (sh.sigNames ? '' : '.sign small.nm{display:none}') + (sh.sigCustOn ? '' : '.sign .s-cust{display:none}') + (sh.sigMgrOn ? '' : '.sign .s-mgr{display:none}') + (sh.sigStampOn ? '' : '.sign .s-stamp{display:none}');
   };
@@ -111,7 +111,7 @@ var DocPrev = {
     var cssNow = function () { var keep = { tpl: U.clone(d.tpl), paper: d.paper, font: d.font, show: U.clone(d.show) }; d.tpl[kind] = o.tpl; d.paper = o.paper; d.font = o.font; d.show = o.show; A4.kindNow = kind; var c = A4.css(); A4.kindNow = null; d.tpl = keep.tpl; d.paper = keep.paper; d.font = keep.font; d.show = keep.show; return c; };
     var draw = function () {
       var w = { A4: 210, A5: 148, Letter: 216 }[o.paper] || 210, hgt = { A4: 297, A5: 210, Letter: 279 }[o.paper] || 297;
-      $('#dpF', m).srcdoc = '<!doctype html><html dir="' + (en ? 'ltr' : 'rtl') + '"><head><meta charset="utf-8"><style>' + cssNow().replace(/@page\{[^}]*\}/, '') + 'html{background:#8a93a3}body{background:#fff;width:' + w + 'mm;min-height:' + hgt + 'mm;margin:0 auto;padding:' + (U.n(d.margin) || 10) + 'mm;box-sizing:border-box;box-shadow:0 6px 24px rgba(0,0,0,.35)}</style></head><body>' + html + '</body></html>';
+      $('#dpF', m).srcdoc = '<!doctype html><html dir="' + (en ? 'ltr' : 'rtl') + '"><head><meta charset="utf-8"><style>' + cssNow().replace(/@page\{[^}]*\}/, '') + 'html{background:#8a93a3}body{background:#fff;width:' + w + 'mm;min-height:' + hgt + 'mm;margin:0 auto;padding:' + (String(d.margin) === '0' ? 0 : (U.n(d.margin) || 10)) + 'mm;box-sizing:border-box;box-shadow:0 6px 24px rgba(0,0,0,.35)}</style></head><body>' + html + '</body></html>';
     };
     $('#dpT', m).onchange = function () { o.tpl = this.value; draw(); };
     $('#dpP', m).onchange = function () { o.paper = this.value; draw(); };
