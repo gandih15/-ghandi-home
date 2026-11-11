@@ -184,6 +184,8 @@ DocSet.mount = function (host) {
   $('#lvTb', m).onclick = function () { var i = $('#lvTa', m), v = i.value.trim(); if (!v) return; (w.terms[kind] = w.terms[kind] || []).push({ t: v, on: true }); i.value = ''; drawTerms(); draw(); };
   $('#lvTa', m).onkeydown = function (e) { if (e.key === 'Enter') $('#lvTb', m).click(); };
   $('#lvR', m).onclick = function () { var h = homeCfg(), keep = h.doc; h.doc = { terms: keep.terms }; var fresh = docCfg().lbl; h.doc = keep; w.lbl = U.clone(fresh); sync(); draw(); };
+  DocSet.cur = { w: w, draw: draw, m: m, inline: inline, kind: function () { return kind; } };
+  if (typeof DocSet.extend === 'function') DocSet.extend(DocSet.cur);
   if (inline) { $('#lvTest', m).onclick = function () { var x = DocLive.sample(kind); if (kind === 'quote') Quote.print(x); else A4.printSale(x); }; sync(); drawTerms(); draw(); return; }
   $('[data-n]', m).onclick = function () { Modal.close(m); };
   $('#lvGo', m).onclick = function () { homeCfg().doc = w; Store.log('doc.settings', 'live editor'); Store.save(); Modal.close(m); toast('💾 ' + L('اتحفظ شكل الفاتورة', 'Invoice layout saved'), 'ok'); };
