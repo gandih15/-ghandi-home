@@ -29,7 +29,7 @@ var Vault = {
   },
   read: function (file) { var b = NODE.fs.readFileSync(file); return Vault.isSealed(b) ? Vault.open(b) : b.toString('utf8'); }
 };
-var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.6.3', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
+var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.7.0', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
 
 /* ---------- small utils ---------- */
 var U = {
@@ -110,7 +110,7 @@ var PERMS = [
   ['settings', 'الإعدادات', 'Settings'],
   ['users', 'المستخدمين والصلاحيات', 'Users & permissions']
 ];
-function allPerms(v) { var o = {}; PERMS.forEach(function (p) { if (p[0] !== 'g') o[p[0]] = p[3] === 'num' ? (v ? 100 : 0) : !!v; }); return o; }
+function allPerms(v) { var o = {}; PERMS.forEach(function (p) { if (p[0] !== 'g') o[p[0]] = p[3] === 'num' ? (v ? 100 : 0) : p[3] === 'sel' ? 0 : !!v; }); return o; }
 var ROLE_PRESETS = {
   cashier: function () { var o = allPerms(false); ['pos.sell', 'pos.hold', 'pos.discount', 'products.view', 'customers', 'pos.reprint', 'pos.drawer', 'layaway', 'stock.viewQty'].forEach(function (k) { o[k] = true; }); o['pos.maxDiscount'] = 5; return o; },
   counter: function () { var o = allPerms(false); o['products.view'] = true; o['stock.count'] = true; return o; },

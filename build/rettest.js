@@ -1,0 +1,67 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const OUT = '/home/claude/ghandi-home/build/shots/ret'; require('fs').mkdirSync(OUT, { recursive: true });
+(async () => {
+  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
+  const pg = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message));
+  await pg.goto('file:///home/claude/ghandi-home/app/index.html?demo&reset'); await pg.waitForTimeout(2500);
+  const login = async (u, pw) => { await pg.selectOption('#lu', u); await pg.fill('#lp', pw); await pg.click('#lb'); await pg.waitForTimeout(1500); await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); }); };
+  const logout = async () => { await pg.evaluate(() => { Store.saveNow(); App.user = null; Dev.unlocked = false; Gate.login(); }); await pg.waitForTimeout(800); };
+  await login('u1', '1234'); await pg.evaluate(() => { S().shiftsEnabled = false; Store.save(); });
+  // make sure mariam has a sale today and an old one
+  const ids = await pg.evaluate(() => {
+    var mk = (days) => { var p = Store.db.products.filter(x => !x.serial && x.stock > 3)[0]; var u = App.user; App.user = Store.db.users.find(x => x.id === 'u2'); var s = Sales.create({ type: 'sale', items: [{ pid: p.id, name: p.name, qty: 2, price: p.prices[0], cost: p.cost, base: p.prices[0] }], payments: { cash: 2 * p.prices[0] }, subtotal: 2 * p.prices[0], total: 2 * p.prices[0], discount: 0, vat: 0 }); App.user = u; s.date = Date.now() - days * 864e5; return s; };
+    var a = mk(0), o = mk(5); Store.save(); return { today: a.no, old: o.no, users: Store.db.users.map(u => u.id + ':' + u.username).join(',') };
+  });
+  console.log('made', JSON.stringify(ids));
+  // perms editor shows the new options
+  await pg.evaluate(() => { go('users'); }); await pg.waitForTimeout(500);
+  await pg.evaluate(() => Views.users.edit(Store.db.users.find(x => x.id === 'u2'), document.querySelector('#view'))); await pg.waitForTimeout(500);
+  await pg.evaluate(() => { var s = document.querySelector('[data-k="sales.days"]'); s.scrollIntoView({ block: 'center' }); s.closest('.perm').style.outline = '3px solid #e11d48'; document.querySelector('[data-k="pos.returnReq"]').closest('.perm').style.outline = '3px solid #e11d48'; }); await pg.waitForTimeout(200);
+  await pg.screenshot({ path: OUT + '/01_perms.png' });
+  console.log('mariam perms:', await pg.evaluate(() => { var p = Store.db.users.find(x => x.id === 'u2').perms; return [p['sales.days'], p['pos.returnReq'], p['pos.return'], p['sales.history']].join(','); }));
+  await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); });
+  await logout(); await login('u2', '1111');
+  await pg.evaluate(() => { go('sales'); }); await pg.waitForTimeout(600);
+  const vis = await pg.evaluate((ids) => { Views.sales.st.range = 'month'; Views.sales.render(document.querySelector('#view')); var t = document.querySelector('#stb').innerText; return { today: t.includes(String(ids.today)), old: t.includes(String(ids.old)) }; }, ids);
+  console.log('cashier sees today/old:', JSON.stringify(vis));
+  await pg.screenshot({ path: OUT + '/02_cashier_list.png' });
+  const blocked = await pg.evaluate((ids) => { Views.sales.st.f.no = String(ids.old); Views.sales.table(); return !document.querySelector('#stb').innerText.includes('#' + ids.old) ; }, ids);
+  await pg.evaluate(() => { Views.sales.st.f.no = ''; });
+  await pg.evaluate((ids) => Views.sales.open(Store.db.sales.find(s => s.no === ids.old)), ids); await pg.waitForTimeout(300);
+  console.log('old by number blocked:', await pg.evaluate(() => !document.querySelector('.mask')));
+  await pg.evaluate((ids) => Views.sales.open(Store.db.sales.find(s => s.no === ids.today)), ids); await pg.waitForTimeout(400);
+  console.log('return btn:', await pg.evaluate(() => { var d = document.querySelector('.mask #dor'); return d && d.textContent; }), 'print btn:', await pg.evaluate(() => !!document.querySelector('.mask #rp')));
+  await pg.evaluate(() => { var i = document.querySelector('.mask [data-rq]'); i.value = 1; }); 
+  const n0 = await pg.evaluate(() => Store.db.sales.length);
+  await pg.click('.mask #dor'); await pg.waitForTimeout(400);
+  await pg.screenshot({ path: OUT + '/03_ask.png' });
+  console.log('no direct return:', await pg.evaluate(n => Store.db.sales.length === n, n0));
+  await pg.fill('#rrW', 'عيب صناعة'); await pg.click('#rrSend'); await pg.waitForTimeout(500);
+  console.log('request pending:', await pg.evaluate(() => RetReq.pending().length));
+  await pg.screenshot({ path: OUT + '/04_cashier_waiting.png' });
+  await logout(); await login('u1', '1234');
+  await pg.evaluate(() => { go('dashboard'); }); await pg.waitForTimeout(700);
+  await pg.screenshot({ path: OUT + '/05_admin_dash.png' });
+  await pg.click('#rrCard [data-ry]'); await pg.waitForTimeout(300);
+  console.log('approved:', await pg.evaluate(() => RetReq.list()[0].status));
+  await logout(); await login('u2', '1111');
+  await pg.evaluate(() => { go('sales'); }); await pg.waitForTimeout(600);
+  await pg.screenshot({ path: OUT + '/06_cashier_reply.png' });
+  await pg.click('#rrCard [data-rx]'); await pg.waitForTimeout(500);
+  await pg.screenshot({ path: OUT + '/07_run.png' });
+  await pg.click('.mask #dor'); await pg.waitForTimeout(800);
+  await pg.screenshot({ path: OUT + '/08_after_click.png' }); console.log('masks after:', await pg.evaluate(() => [...document.querySelectorAll('.mask .mh, .mask h2, .mask .title')].map(x=>x.textContent).join(' | ')));
+  await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); });
+  const done = await pg.evaluate(() => { var r = RetReq.list()[0]; var ret = Store.db.sales.filter(s => s.type === 'return').slice(-1)[0]; return [r.status, ret && ret.approvedBy, ret && ret.items[0].qty].join(','); });
+  console.log('done:', done);
+  // live approval with admin password
+  await pg.evaluate((ids) => Views.sales.open(Store.db.sales.find(s => s.no === ids.today)), ids); await pg.waitForTimeout(400);
+  await pg.evaluate(() => { var i = document.querySelector('.mask [data-rq]'); i.value = 1; });
+  await pg.click('.mask #dor'); await pg.waitForTimeout(300); await pg.fill('#rrP', '9999'); await pg.click('#rrOk'); await pg.waitForTimeout(400);
+  const n1 = await pg.evaluate(() => Store.db.sales.length);
+  await pg.fill('#rrP', '1234'); await pg.click('#rrOk'); await pg.waitForTimeout(900);
+  await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); });
+  console.log('live approve:', await pg.evaluate(n => Store.db.sales.length > n && Store.db.sales.slice(-1)[0].approvedBy, n1));
+  console.log('ERRORS:', errs.length ? errs.join('\n') : 'none'); await b.close();
+})();
