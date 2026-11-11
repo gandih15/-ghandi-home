@@ -29,7 +29,7 @@ var Vault = {
   },
   read: function (file) { var b = NODE.fs.readFileSync(file); return Vault.isSealed(b) ? Vault.open(b) : b.toString('utf8'); }
 };
-var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.8.4', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
+var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.9.0', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
 
 /* ---------- small utils ---------- */
 var U = {

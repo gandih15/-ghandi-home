@@ -352,7 +352,7 @@ Views.pos = {
     var P = Views.pos, q = U.norm(P.q), out = [], all = Store.db.products;
     for (var i = 0; i < all.length && out.length < 60; i++) {
       var p = all[i]; if (p.active === false || U.n(p.stock) <= 0) continue; if (P.cat && p.cat !== P.cat) continue; if (P.sub && p.sub !== P.sub) continue;
-      if (q && U.norm(p.name + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ')).indexOf(q) < 0) continue;
+      if (q && U.norm(p.name + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ') + ' ' + (p.code || '')).indexOf(q) < 0) continue;
       out.push(p);
     }
     $('#tiles').innerHTML = out.length ? out.map(function (p) { var st = U.n(p.stock); return '<div class="tile" data-id="' + p.id + '"><div class="th">' + (kit() || p.img ? prodGem(p, 'sw8') : '<div class="sw8" style="background:' + swatch(p) + '">' + U.esc(pname(p).charAt(0)) + '</div>') + '<span class="st chip ' + (st <= 0 ? 'bad' : st <= U.n(p.minStock) ? 'warn' : '') + ' num">' + st + '</span></div><div class="nm">' + U.esc(pname(p)) + (p.shade ? ' <span class="muted">· ' + U.esc(p.shade) + '</span>' : '') + '</div>' + (function () { var pr = (Views.pos.price || Promo.price)(p, Views.pos.tileTier ? Views.pos.tileTier() : App.cart.tier); return (pr.promo ? '<span class="ribbon">−' + pr.pct + '%</span>' : '') + '<div class="pr">' + (pr.promo ? '<s class="old num">' + U.money(pr.base) + '</s> ' : '') + M(pr.price) + '</div>'; })() + '</div>'; }).join('') : '<div class="empty">' + L('لا توجد نتائج', 'No results') + '</div>';

@@ -4,7 +4,7 @@ function pickProduct(cb, opt) { // search box modal
   opt = opt || {};
   var m = Modal.open({ size: 'wide', title: L('اختيار صنف', 'Pick a product'), body: '<input class="in" autofocus placeholder="' + L('ابحث أو امسح باركود…', 'Search or scan…') + '"><div id="pp" style="margin-top:10px;max-height:55vh;overflow:auto"></div>' });
   var inp = $('input', m), draw = function () {
-    var q = U.norm(inp.value), res = Store.db.products.filter(function (p) { return !q || U.norm(p.name + ' ' + (p.nameEn || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ')).indexOf(q) >= 0; }).slice(0, 80);
+    var q = U.norm(inp.value), res = Store.db.products.filter(function (p) { return !q || U.norm(p.name + ' ' + (p.nameEn || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ') + ' ' + (p.code || '')).indexOf(q) >= 0; }).slice(0, 80);
     $('#pp', m).innerHTML = res.map(function (p) { return '<div class="list-row" data-id="' + p.id + '" style="cursor:pointer"><div style="width:30px;height:30px;border-radius:9px;background:' + swatch(p) + '"></div><div class="grow"><b>' + U.esc(pname(p)) + '</b> <span class="muted small">' + U.esc(p.shade || '') + '</span><div>' + p.barcodes.slice(0, 3).map(function (b) { return '<span class="tag">' + U.esc(b) + '</span>'; }).join('') + '</div></div><span class="chip num">' + U.n(p.stock) + '</span></div>'; }).join('') || '<div class="empty">—</div>';
     $$('[data-id]', m).forEach(function (r) { r.onclick = function () { Modal.close(m); cb(Store.product(r.dataset.id)); }; });
   };
@@ -43,7 +43,7 @@ Views.products = {
       if (P.filter === 'exp' && !(p.expiry && new Date(p.expiry).getTime() < expD)) return false;
       if (P.filter === 'off' && p.active !== false) return false;
       if (P.filter !== 'off' && p.active === false && P.filter !== 'all') return false;
-      if (q && U.norm(p.name + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ')).indexOf(q) < 0) return false;
+      if (q && U.norm(p.name + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ') + ' ' + (p.code || '')).indexOf(q) < 0) return false;
       return true;
     });
   },
@@ -144,7 +144,7 @@ Views.products = {
   },
   exportDlg: function () {
     var rows = [PCOLS.map(function (c) { return L(c[1], c[2]); })];
-    Views.products.list().forEach(function (p) { rows.push([p.name, p.nameEn || '', p.barcodes.join(' | '), p.cat || '', p.brand || '', p.shade || '', can('products.viewCost') ? U.n(p.cost) : '', U.n(p.prices[0]), U.n(p.prices[1]), U.n(p.prices[2]), U.n(p.prices[3]), U.n(p.stock), U.n(p.minStock), p.expiry || ''].concat(PCOLS.length > 14 ? [p.sub || ''] : [])); });
+    Views.products.list().forEach(function (p) { rows.push([p.name, p.nameEn || '', p.barcodes.join(' | '), p.cat || '', p.brand || '', p.shade || '', can('products.viewCost') ? U.n(p.cost) : '', U.n(p.prices[0]), U.n(p.prices[1]), U.n(p.prices[2]), U.n(p.prices[3]), U.n(p.stock), U.n(p.minStock), p.expiry || ''].concat(PCOLS.length > 14 ? [p.sub || ''] : []).concat(PCOLS.length > 15 ? [p.code || ''] : [])); });
     var m = Modal.open({ title: L('تصدير الأصناف', 'Export products'), body: '<p>' + (rows.length - 1) + L(' صنف (حسب الفلتر الحالي)', ' products (current filter)') + '</p><div class="row"><button class="btn pri grow" id="x1">' + ic('file') + 'Excel (.xlsx)</button><button class="btn grow" id="x2">CSV</button><button class="btn grow" id="x3">' + L('قالب فارغ', 'Empty template') + '</button></div>' });
     $('#x1', m).onclick = function () { saveBlob(XL.writeXlsx(rows, 'Products', lang() !== 'en'), 'ghandi_products_' + U.today() + '.xlsx'); Store.log('export', rows.length - 1); Modal.close(m); };
     $('#x2', m).onclick = function () { saveBlob(new Blob([XL.writeCsv(rows)], { type: 'text/csv' }), 'ghandi_products_' + U.today() + '.csv'); Modal.close(m); };
@@ -180,6 +180,7 @@ Views.products = {
         p.name = String(o.name).trim(); if (o.nameEn != null) p.nameEn = String(o.nameEn); if (o.cat) p.cat = String(o.cat).trim(); if (o.brand != null) p.brand = String(o.brand); if (o.shade != null) p.shade = String(o.shade); if (o.sub != null && typeof Subs !== 'undefined') { p.sub = String(o.sub).trim(); if (p.cat && p.sub) { var sa = Subs.all(); sa[p.cat] = sa[p.cat] || []; if (sa[p.cat].indexOf(p.sub) < 0) sa[p.cat].push(p.sub); } }
         if (ep || !ex) { if (o.cost != null && o.cost !== '') p.cost = U.n(o.cost); ['p0', 'p1', 'p2', 'p3'].forEach(function (k, i) { if (o[k] != null && o[k] !== '') p.prices[i] = U.n(o[k]); }); }
         if (o.minStock != null && o.minStock !== '') p.minStock = U.n(o.minStock);
+        if (o.code != null && String(o.code).trim() !== '' && typeof ItemNo !== 'undefined' && ItemNo.canEdit()) { var cv = String(o.code).trim().replace(/\.0$/, ''); if (!ItemNo.taken(cv, p)) p.code = cv; }
         if (o.expiry) { var ev = String(o.expiry); if (/^\d{5}$/.test(ev)) { var dd = new Date(Date.UTC(1899, 11, 30) + (+ev) * 864e5); ev = U.today(dd); } p.expiry = ev; }
         bcs.forEach(function (b) { var other = Store.byBarcode(b); if (!other || other === p) { if (p.barcodes.indexOf(b) < 0) p.barcodes.push(b); Store.bcIndex[b] = p; } });
         if (!p.barcodes.length) p.barcodes.push(Store.newBarcode());

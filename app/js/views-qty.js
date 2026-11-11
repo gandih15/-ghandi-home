@@ -71,7 +71,7 @@ if (typeof Updater !== 'undefined') Updater.notes['2.0.2'] = ['🔎 الجرد: 
     var addP = function (p) { list.classList.add('hide'); cs.value = p.barcodes[0] || ''; orig.call(cs, { key: 'Enter', preventDefault: function () {} }); cs.value = ''; cs.focus(); };
     var show = function () {
       var raw = cs.value.trim(), q = U.norm(raw.replace(/^\d+\*/, '')); if (q.length < 2 || /^\d+$/.test(q)) { list.classList.add('hide'); hits = []; return; }
-      var vq = can('stock.viewQty'); hits = Store.db.products.filter(function (p) { return U.norm(pname(p) + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ')).indexOf(q) >= 0; }).slice(0, 12); cur = 0;
+      var vq = can('stock.viewQty'); hits = Store.db.products.filter(function (p) { return U.norm(pname(p) + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ') + ' ' + (p.code || '')).indexOf(q) >= 0; }).slice(0, 12); cur = 0;
       list.innerHTML = hits.length ? hits.map(function (p, i) { var ln = V.cur.lines[p.id]; return '<div data-i="' + i + '"' + (i ? '' : ' class="on"') + '><b>' + U.esc(pname(p)) + '</b>' + (p.shade ? ' <span class="muted">· ' + U.esc(p.shade) + '</span>' : '') + ' <span class="muted small num">' + U.esc(p.barcodes[0] || '') + '</span>' + (vq ? ' <span class="chip num">' + U.n(p.stock) + '</span>' : '') + (ln ? ' <span class="chip ok num">' + L('معدود ', 'counted ') + ln.q + '</span>' : '') + '</div>'; }).join('') : '<div class="muted">' + L('مفيش صنف بالاسم ده', 'No product matches') + '</div>';
       list.classList.remove('hide');
       $$('[data-i]', list).forEach(function (d) { d.onmousedown = function (e) { e.preventDefault(); var mm = cs.value.trim().match(/^(\d+)\*/); var p = hits[+d.dataset.i]; if (mm) { cs.value = mm[1] + '*' + p.barcodes[0]; orig.call(cs, { key: 'Enter', preventDefault: function () {} }); cs.value = ''; list.classList.add('hide'); cs.focus(); } else addP(p); }; });
@@ -98,7 +98,7 @@ if (typeof Updater !== 'undefined') Updater.notes['2.0.2'] = ['🔎 الجرد: 
     var pick = function (p) { list.classList.add('hide'); hits = []; inp.value = p.barcodes[0] || ''; orig.call(inp, { key: 'Enter' }); inp.value = ''; inp.focus(); };
     var show = function () {
       var q = U.norm(inp.value.trim()); if (q.length < 2 || /^\d+$/.test(q)) { list.classList.add('hide'); hits = []; return; }
-      hits = Store.db.products.filter(function (p) { return p.active !== false && U.norm(pname(p) + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ')).indexOf(q) >= 0; }).slice(0, 10); cur = 0;
+      hits = Store.db.products.filter(function (p) { return p.active !== false && U.norm(pname(p) + ' ' + (p.nameEn || '') + ' ' + (p.brand || '') + ' ' + (p.shade || '') + ' ' + p.barcodes.join(' ') + ' ' + (p.code || '')).indexOf(q) >= 0; }).slice(0, 10); cur = 0;
       list.innerHTML = hits.length ? hits.map(function (p, i) { var pr = (Views.pos.price || Promo.price)(p, 0); return '<div data-i="' + i + '"' + (i ? '' : ' class="on"') + '><span class="grow"><b>' + U.esc(pname(p)) + '</b>' + (p.shade ? ' <span class="muted">· ' + U.esc(p.shade) + '</span>' : '') + '</span><b class="num">' + U.money(pr.price) + '</b></div>'; }).join('') : '<div class="muted">' + L('مفيش صنف بالاسم ده', 'No product matches') + '</div>';
       list.classList.remove('hide');
       $$('[data-i]', list).forEach(function (d) { d.onmousedown = function (e) { e.preventDefault(); pick(hits[+d.dataset.i]); }; });
