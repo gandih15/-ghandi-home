@@ -117,11 +117,16 @@ var DK_NAMES = { logo: 'اللوجو', slogan: 'الشعار تحت اسم ال�
 var LBL_SHOW = { sigCust: 'sigCustOn', sigMgr: 'sigMgrOn', sigStamp: 'sigStampOn', colUnit: 'unit', colNo: 'colNo', colPrice: 'colPrice', colWar: 'warranty', subtotal: 'subtotal', discount: 'discount', net: 'netRow', saleNo: 'mNo', quoteNo: 'mNo', date: 'mDate', to: 'mCust', mobile: 'mMobile', address: 'mAddr', seller: 'seller', by: 'seller', saleTitle: 'title', quoteTitle: 'title', retTitle: 'title', termsTitle: 'terms', change: 'payments', credit: 'payments', walkin: '' };
 DocSet.open = function () {
   if (!can('settings')) return toast(L('ده من صلاحية المدير', 'Admin only'), 'bad');
-  var w = U.clone(docCfg()), kind = 'sale';
+  DocSet.mount(null);
+};
+/* host given → the editor lives inside the page and every change is saved on the spot */
+DocSet.mount = function (host) {
+  var inline = !!host, w = inline ? docCfg() : U.clone(docCfg()), kind = 'sale';
   var SHOWS = ['title', 'logo', 'slogan', 'shopAddr', 'shopPhones', 'tax', 'mNo', 'mDate', 'mCust', 'mMobile', 'mAddr', 'seller', 'colNo', 'unit', 'colPrice', 'warranty', 'subtotal', 'discount', 'netRow', 'payments', 'words', 'inst', 'terms', 'sign', 'sigCustOn', 'sigMgrOn', 'sigStampOn', 'sigNames', 'foot'];
   var LB = [['saleTitle', 'عنوان فاتورة البيع'], ['saleNo', '«رقم الفاتورة»'], ['retTitle', 'عنوان المرتجع'], ['quoteTitle', 'عنوان عرض السعر'], ['quoteNo', '«رقم العرض»'], ['to', 'كلمة العميل'], ['walkin', 'لو مفيش عميل'], ['mobile', '«الموبايل»'], ['address', '«العنوان»'], ['date', '«التاريخ»'], ['valid', '«ساري حتى»'], ['by', '«مقدم العرض»'], ['seller', '«البائع»'], ['colNo', 'عمود الترقيم'], ['colItem', 'عمود الصنف'], ['colUnit', 'عمود الوحدة'], ['colQty', 'عمود الكمية'], ['colPrice', 'عمود السعر'], ['colTotal', 'عمود الإجمالي'], ['colWar', 'عمود الضمان'], ['subtotal', 'سطر الإجمالي'], ['discount', 'سطر الخصم'], ['net', 'سطر الصافي'], ['change', 'الباقي'], ['credit', 'الآجل'], ['termsTitle', 'عنوان الشروط'], ['sigCust', 'توقيع العميل'], ['sigMgr', 'توقيع المسئول'], ['sigStamp', 'الختم'], ['mgrName', 'اسم المسئول (فاضي = صاحب المحل)'], ['topNote', 'جملة فوق الأصناف (اختياري)'], ['footNote', 'جملة في آخر الورقة (اختياري)']];
-  var m = Modal.open({ size: 'xl', sticky: true, title: '🧾 ' + L('محرر الفاتورة وعرض السعر — مباشر', 'Live invoice & quotation editor'), body:
-    '<div class="grid" style="grid-template-columns:380px 1fr;gap:14px;align-items:start"><div class="col" style="max-height:72vh;overflow:auto;padding-inline-end:4px">' +
+  var H2 = inline ? 'calc(100vh - 250px)' : '68vh';
+  var BODY =
+    '<div class="grid" style="grid-template-columns:380px 1fr;gap:14px;align-items:start"><div class="col" style="max-height:' + (inline ? 'calc(100vh - 210px)' : '72vh') + ';overflow:auto;padding-inline-end:4px">' +
     '<div class="card col" style="padding:10px"><div class="seg" id="lvK"><button data-k="sale" class="on">🧾 ' + L('فاتورة البيع', 'Sales invoice') + '</button><button data-k="quote">📝 ' + L('عرض السعر', 'Quotation') + '</button></div>' +
     '<label class="f">' + L('التصميم', 'Design') + '<select class="in" id="lvT">' + DOC_TPLS.map(function (t) { return '<option value="' + t[0] + '">' + t[3] + ' ' + L(t[1], t[2]) + '</option>'; }).join('') + '</select></label>' +
     '<div class="grid g3"><label class="f">' + L('المقاس', 'Paper') + '<select class="in" id="lvP">' + ['A4', 'A5', 'Letter'].map(function (p) { return '<option' + (p === w.paper ? ' selected' : '') + '>' + p + '</option>'; }).join('') + '</select></label><label class="f">' + L('الكلام %', 'Text %') + '<input class="in num" type="number" id="lvF" step="5" min="70" max="140" value="' + w.font + '"></label><label class="f">' + L('الهامش', 'Margin') + '<input class="in num" type="number" id="lvM" min="3" max="25" value="' + w.margin + '"></label></div>' +
@@ -129,7 +134,10 @@ DocSet.open = function () {
     '<div class="card col" style="padding:10px"><b>👁️ ' + L('يظهر / يختفي', 'Show / hide') + '</b><div class="grid g2" style="gap:2px 10px">' + SHOWS.map(function (k) { return '<label class="row small"><input type="checkbox" data-sh="' + k + '"' + (w.show[k] !== false ? ' checked' : '') + '> ' + DK_NAMES[k] + '</label>'; }).join('') + '</div></div>' +
     '<div class="card col" style="padding:10px"><b>📜 ' + L('الجمل اللي تحت', 'Lines at the bottom') + '</b><div id="lvTl"></div><div class="row"><input class="in grow" id="lvTa" placeholder="' + L('جملة جديدة…', 'New line…') + '"><button class="btn" id="lvTb">➕</button></div></div>' +
     '<div class="card col" style="padding:10px"><b>✍️ ' + L('الكلام المكتوب', 'Wording') + '</b>' + LB.map(function (x) { return '<label class="f">' + x[1] + '<input class="in" data-lb="' + x[0] + '" value="' + U.esc(w.lbl[x[0]] || '') + '"' + (x[0] === 'mgrName' ? ' placeholder="' + U.esc(S().ownerName || '') + '"' : '') + '></label>'; }).join('') + '</div></div>' +
-    '<div class="col" style="gap:6px"><div class="chip" style="white-space:normal;display:block;padding:8px 12px">👆 ' + L('أي تغيير بيظهر في الورقة على طول. ودوس على أي حاجة في الورقة نفسها عشان تغيّر كلامها أو تخفيها أو تمسحها.', 'Every change shows instantly. Click anything on the page to rename, hide or delete it.') + '</div><div style="background:#8a93a3;border-radius:12px;height:68vh;overflow:hidden"><iframe id="lvF2" style="width:100%;height:100%;border:0"></iframe></div></div></div>',
+    '<div class="col" style="gap:6px"><div class="chip" style="white-space:normal;display:block;padding:8px 12px">👆 ' + L('أي تغيير بيظهر في الورقة على طول. ودوس على أي حاجة في الورقة نفسها عشان تغيّر كلامها أو تخفيها أو تمسحها.', 'Every change shows instantly. Click anything on the page to rename, hide or delete it.') + '</div><div style="background:#8a93a3;border-radius:12px;height:' + H2 + ';min-height:420px;overflow:hidden"><iframe id="lvF2" style="width:100%;height:100%;border:0"></iframe></div></div></div>';
+  var m;
+  if (inline) { host.innerHTML = BODY + '<div class="row" style="margin-top:8px"><span class="chip ok">✅ ' + L('أي تغيير بيتحفظ لوحده على طول', 'Every change is saved automatically') + '</span><span class="grow"></span><button class="btn" id="lvR">↺ ' + L('رجّع الكلام للافتراضي', 'Reset wording') + '</button><button class="btn" id="lvTest">🖨️ ' + L('طباعة تجريبية', 'Test print') + '</button></div>'; m = host; }
+  else m = Modal.open({ size: 'xl', sticky: true, title: '🧾 ' + L('محرر الفاتورة وعرض السعر — مباشر', 'Live invoice & quotation editor'), body: BODY,
     foot: '<button class="btn" data-n>' + L('إلغاء', 'Cancel') + '</button><button class="btn" id="lvR">↺ ' + L('رجّع الكلام للافتراضي', 'Reset wording') + '</button><button class="btn pri lg" id="lvGo">💾 ' + L('حفظ', 'Save') + '</button>' });
   var frame = $('#lvF2', m);
   var drawTerms = function () {
@@ -141,7 +149,7 @@ DocSet.open = function () {
     $$('[data-tu]', box).forEach(function (c) { c.onclick = function () { var i = +c.dataset.tu; if (!i) return; var a = w.terms[k], x = a.splice(i, 1)[0]; a.splice(i - 1, 0, x); drawTerms(); draw(); }; });
   };
   var sync = function () { $$('[data-sh]', m).forEach(function (c) { c.checked = w.show[c.dataset.sh] !== false; }); $$('[data-lb]', m).forEach(function (i) { if (document.activeElement !== i) i.value = w.lbl[i.dataset.lb] || ''; }); $('#lvT', m).value = w.tpl[kind] || 'classic'; };
-  var t0; var draw = function () { clearTimeout(t0); t0 = setTimeout(function () { DocLive.render(frame, kind, w, pick); }, 60); };
+  var t0; var draw = function () { clearTimeout(t0); t0 = setTimeout(function () { if (!frame.isConnected) return; DocLive.render(frame, kind, w, pick); if (inline) Store.save(); }, 60); };
   // click on the page itself
   var pick = function (key, el) {
     var p = key.split(':'), type = p[0];
@@ -170,16 +178,29 @@ DocSet.open = function () {
   $('#lvP', m).onchange = function () { w.paper = this.value; draw(); };
   $('#lvF', m).oninput = function () { w.font = Math.max(70, Math.min(140, U.n(this.value) || 100)); draw(); };
   $('#lvM', m).oninput = function () { w.margin = Math.max(3, Math.min(25, U.n(this.value) || 10)); draw(); };
-  $('#lvPv', m).onchange = function () { w.preview = this.checked; };
+  $('#lvPv', m).onchange = function () { w.preview = this.checked; if (inline) Store.save(); };
   $$('[data-sh]', m).forEach(function (c) { c.onchange = function () { w.show[c.dataset.sh] = c.checked; draw(); }; });
   $$('[data-lb]', m).forEach(function (i) { i.oninput = function () { w.lbl[i.dataset.lb] = i.value; draw(); }; });
   $('#lvTb', m).onclick = function () { var i = $('#lvTa', m), v = i.value.trim(); if (!v) return; (w.terms[kind] = w.terms[kind] || []).push({ t: v, on: true }); i.value = ''; drawTerms(); draw(); };
   $('#lvTa', m).onkeydown = function (e) { if (e.key === 'Enter') $('#lvTb', m).click(); };
   $('#lvR', m).onclick = function () { var h = homeCfg(), keep = h.doc; h.doc = { terms: keep.terms }; var fresh = docCfg().lbl; h.doc = keep; w.lbl = U.clone(fresh); sync(); draw(); };
+  if (inline) { $('#lvTest', m).onclick = function () { var x = DocLive.sample(kind); if (kind === 'quote') Quote.print(x); else A4.printSale(x); }; sync(); drawTerms(); draw(); return; }
   $('[data-n]', m).onclick = function () { Modal.close(m); };
   $('#lvGo', m).onclick = function () { homeCfg().doc = w; Store.log('doc.settings', 'live editor'); Store.save(); Modal.close(m); toast('💾 ' + L('اتحفظ شكل الفاتورة', 'Invoice layout saved'), 'ok'); };
   sync(); drawTerms(); draw();
 };
+
+/* the «Invoice design» page: when the paper is A4 the whole live editor opens right there */
+(function () {
+  var vi = Views.invoice;
+  Views.invoice = function (el) {
+    var c = S().invoice; if (c.paper !== 'A4') { var r = vi.apply(this, arguments); var ab = $('#ipaper [data-v="A4"]', el); if (ab) ab.onclick = function () { c.paper = 'A4'; Store.save(); Views.invoice(el); }; return r; }
+    el.innerHTML = '<div class="card row" style="gap:14px;padding:10px 14px;margin-bottom:12px;flex-wrap:wrap"><b>🖨️ ' + L('مقاس الورق', 'Paper') + '</b><div class="seg" id="ipaper">' + [['58', '58mm'], ['80', '80mm'], ['A4', 'A4']].map(function (p) { return '<button data-v="' + p[0] + '" class="' + (c.paper === p[0] ? 'on' : '') + '">' + p[1] + '</button>'; }).join('') + '</div><label class="row small">' + L('عدد النسخ', 'Copies') + ' <input class="in num" type="number" id="icp" min="1" max="5" style="width:70px" value="' + (c.copies || 1) + '"></label><span class="muted small grow">👆 ' + L('غيّر من الشمال أو دوس على أي حاجة في الورقة — بيتطبق ويتحفظ في نفس اللحظة', 'Change anything on the left or click anything on the page — applied and saved instantly') + '</span></div><div id="ilive"></div>';
+    $$('#ipaper button', el).forEach(function (b) { b.onclick = function () { c.paper = b.dataset.v; Store.save(); Views.invoice(el); }; });
+    $('#icp', el).oninput = function () { c.copies = Math.max(1, U.n(this.value) || 1); Store.save(); };
+    DocSet.mount($('#ilive', el));
+  };
+})();
 
 /* ================= developer rule: retail price >= cost ================= */
 var PriceGuard = {

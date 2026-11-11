@@ -1,0 +1,25 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const OUT = '/home/claude/ghandi-home/build/shots/live'; 
+(async () => {
+  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
+  const pg = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message));
+  await pg.goto('file:///home/claude/ghandi-home/app/index.html?demo&reset'); await pg.waitForTimeout(2500);
+  await pg.fill('#lp', '1234'); await pg.click('#lb'); await pg.waitForTimeout(1500);
+  await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); S().invoice.paper = '80'; go('invoice'); }); await pg.waitForTimeout(600);
+  await pg.click('#ipaper [data-v="A4"]'); await pg.waitForTimeout(900);
+  await pg.screenshot({ path: OUT + '/10_page_a4.png' });
+  const ft = () => pg.evaluate(() => document.querySelector('#lvF2').contentDocument.body.innerText);
+  await pg.fill('[data-lb="saleTitle"]', 'فاتورة مبيعات'); await pg.waitForTimeout(300);
+  console.log('live+saved:', /فاتورة مبيعات/.test(await ft()), await pg.evaluate(() => homeCfg().doc.lbl.saleTitle));
+  await pg.fill('#lvF', '120'); await pg.waitForTimeout(300); console.log('size saved:', await pg.evaluate(() => homeCfg().doc.font));
+  const fr = pg.frameLocator('#lvF2');
+  await fr.locator('[data-dk^="term:sale"]').first().click(); await pg.waitForTimeout(300); await pg.click('#pkD'); await pg.waitForTimeout(300);
+  console.log('terms left:', await pg.evaluate(() => homeCfg().doc.terms.sale.length));
+  await fr.locator('[data-dk="show:logo"], [data-dk="lbl:sigStamp"]').first().click(); await pg.waitForTimeout(300);
+  await pg.screenshot({ path: OUT + '/11_page_click.png' });
+  await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); go('dashboard'); go('invoice'); }); await pg.waitForTimeout(800);
+  console.log('after reopen:', /فاتورة مبيعات/.test(await ft()));
+  await pg.click('#ipaper [data-v="80"]'); await pg.waitForTimeout(500); console.log('thermal page back:', await pg.evaluate(() => !!document.querySelector('#iprev')));
+  console.log('ERRORS:', errs.length ? errs.join('\n') : 'none'); await b.close();
+})();
