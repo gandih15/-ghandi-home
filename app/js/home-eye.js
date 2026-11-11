@@ -75,3 +75,35 @@ var Eye = {
     return r;
   };
 })();
+
+/* ================= POS: where a newly added item shows (top or bottom), chosen by the admin ================= */
+var PosOrder = {
+  get: function () { return S().posOrder || 'top'; },
+  btn: function () {
+    var top = PosOrder.get() === 'top';
+    return (top ? '⬆️ ' + L('الجديد فوق', 'Newest on top') : '⬇️ ' + L('الجديد تحت', 'Newest at bottom'));
+  }
+};
+(function () {
+  var dr = Views.pos.draw;
+  Views.pos.draw = function () {
+    var r = dr.apply(this, arguments), box = $('#items'); if (!box) return r;
+    var rows = $$('#items > .ci');
+    if (PosOrder.get() === 'top' && rows.length > 1) rows.reverse().forEach(function (x) { box.appendChild(x); });
+    var sel = $('#items > .ci.sel') || (PosOrder.get() === 'top' ? rows[0] : rows[rows.length - 1]);
+    if (sel) { try { sel.scrollIntoView({ block: 'nearest' }); } catch (e) { } }
+    return r;
+  };
+  var rn = Views.pos.render;
+  Views.pos.render = function (el) {
+    var r = rn.apply(this, arguments);
+    if (can('settings')) {
+      var bar = $('.pos-extra'); if (bar && !$('#xOrd')) {
+        var b = document.createElement('button'); b.className = 'btn sm'; b.id = 'xOrd'; b.title = L('ترتيب الأصناف في الفاتورة — للمدير بس', 'Item order in the cart — admin only'); b.textContent = PosOrder.btn();
+        b.onclick = function () { S().posOrder = PosOrder.get() === 'top' ? 'bottom' : 'top'; Store.log('pos.order', S().posOrder); Store.save(); b.textContent = PosOrder.btn(); Views.pos.draw(); toast(PosOrder.btn(), 'ok'); };
+        bar.appendChild(b);
+      }
+    }
+    return r;
+  };
+})();
