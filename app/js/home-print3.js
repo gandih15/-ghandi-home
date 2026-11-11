@@ -143,3 +143,45 @@ DocSet.fit = function (m) {
     return r;
   };
 })();
+
+/* ---------- wholesale style (like the paper the owner sent): name in a band, details beside it, full grid ---------- */
+var WHOLESALE = ['ws', 'wsBlue', 'wsLine', 'wsDark', 'wsFrame'];
+DOC_TPLS.push(['ws', 'جملة رمادي (زي الصورة)', 'Wholesale grey', '📋'], ['wsBlue', 'جملة أزرق', 'Wholesale blue', '🟦'], ['wsLine', 'جملة خطوط بس (موفّر للحبر)', 'Wholesale lines', '📃'], ['wsDark', 'جملة شريط داكن', 'Wholesale dark', '⬛'], ['wsFrame', 'جملة بإطار', 'Wholesale framed', '🗂️']);
+(function () {
+  var wsCss = function (band, bandTxt, th, thTxt, line, extra) {
+    return 'body{font-size:12px}.a4{display:grid;grid-template-columns:1.15fr 1fr;column-gap:16px;align-items:start}.a4>*{grid-column:1/-1}' +
+      '.a4>.a4h{grid-column:1;grid-row:1;display:block;border:0;padding:0}.a4>.meta{grid-column:2;grid-row:1;margin:0;align-self:start}' +
+      '.a4h .shop{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:start}.a4h .shop>img{grid-column:2;grid-row:1 / span 2;max-height:76px}.a4h .shop>div{grid-column:1}' +
+      '.a4h h1{background:' + band + ';color:' + bandTxt + ';padding:6px 12px;font-size:18px;border-radius:0}.a4h .sm{color:#222;font-size:12px;font-weight:700;line-height:1.75;margin-top:4px}' +
+      '.a4t{background:transparent!important;color:#222!important;border:0!important;padding:0;font-size:12px!important;font-weight:700;text-align:start;min-width:0;margin-top:4px;box-shadow:none}' +
+      '.meta{display:block;background:transparent;border:0;padding:0;font-size:12.5px}.meta div{display:flex;gap:8px;padding:2px 0;border:0}.meta b{min-width:96px;color:#222}' +
+      'table.g{margin-top:10px;border:1px solid ' + line + '}table.g th{background:' + th + ';color:' + thTxt + ';border:1px solid ' + line + ';padding:5px 4px;font-size:12px;font-weight:700}' +
+      'table.g td{border:1px solid ' + line + ';padding:4px 5px;font-size:12.5px}table.g tr:nth-child(even) td{background:transparent}table.g td:first-child{width:28px}' +
+      '.tot .box{border:1px solid ' + line + ';border-radius:0}.tot .box div{border-bottom:1px solid ' + line + '}.tot .box .big{background:' + th + ';color:' + thTxt + '}.words{border:1px solid ' + line + ';border-radius:0;background:transparent}' +
+      '.terms{border-top:1px solid ' + line + '}.sign div{border-top:1px solid ' + line + '}' + (extra || '');
+  };
+  var tc = A4.tplCss;
+  A4.tplCss = function (tpl) {
+    var ac = docColor();
+    var x = {
+      ws: wsCss('#d6d6d6', '#111', '#cfcfcf', '#111', '#555'),
+      wsBlue: wsCss(ac, '#fff', '#dfe8f5', '#0d2a4d', '#6b7f99'),
+      wsLine: wsCss('transparent', '#111', '#fff', '#111', '#222', '.a4h h1{border-bottom:2px solid #111;padding-inline-start:0}'),
+      wsDark: wsCss('#222', '#fff', '#222', '#fff', '#444'),
+      wsFrame: wsCss('#e6e6e6', '#111', '#e6e6e6', '#111', '#333', '.a4{border:2px solid #333;padding:10px 12px;box-sizing:border-box;min-height:270mm;align-content:start}')
+    }[tpl];
+    return x != null ? x : tc.apply(this, arguments);
+  };
+  // choosing a wholesale design turns on the item-code column and the invoice type line
+  var ext = DocSet.extend;
+  DocSet.extend = function (cur) {
+    ext.apply(this, arguments);
+    var sel = $('#lvT', cur.m); if (!sel) return;
+    sel.addEventListener('change', function () {
+      if (WHOLESALE.indexOf(sel.value) < 0) return;
+      var w = cur.w, ch = false; ['colCode', 'mType'].forEach(function (k) { if (w.show[k] !== true && !(w._wsAsked || {})[k]) { w.show[k] = true; ch = true; } });
+      w._wsAsked = { colCode: 1, mType: 1 };
+      if (ch) { $$('[data-sh="colCode"],[data-sh="mType"]', cur.m).forEach(function (c) { c.checked = true; }); toast('📋 ' + L('اتفتح عمود «رقم الصنف» وسطر «نوع الفاتورة» — تقدر تقفلهم من «يظهر / يختفي»', 'Item code column and invoice type turned on'), 'ok'); cur.draw(); }
+    });
+  };
+})();

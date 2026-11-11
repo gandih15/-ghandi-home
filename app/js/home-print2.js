@@ -7,9 +7,9 @@
   var dc = docCfg;
   docCfg = function () {
     var d = dc.apply(this, arguments);
-    var sh = { title: true, slogan: true, shopAddr: true, shopPhones: true, tax: true, mNo: true, mDate: true, mCust: true, mMobile: true, mAddr: true, colNo: true, colPrice: true, subtotal: true, discount: true, netRow: true, inst: true, words: true };
+    var sh = { colCode: false, mType: false, title: true, slogan: true, shopAddr: true, shopPhones: true, tax: true, mNo: true, mDate: true, mCust: true, mMobile: true, mAddr: true, colNo: true, colPrice: true, subtotal: true, discount: true, netRow: true, inst: true, words: true };
     Object.keys(sh).forEach(function (k) { if (d.show[k] === undefined) d.show[k] = sh[k]; });
-    var lb = { colNo: 'م', colItem: 'الصنف', colUnit: 'الوحدة', colQty: 'الكمية', colPrice: 'السعر', colTotal: 'الإجمالي', colWar: 'الضمان', subtotal: 'الإجمالي', discount: 'الخصم', net: 'الصافي', change: 'الباقي', credit: 'آجل على العميل', walkin: 'نقدي', topNote: '', footNote: '' };
+    var lb = { colCode: 'رقم الصنف', mType: 'نوع الفاتورة', typeCash: 'نقدي', typeCredit: 'آجل', typeRet: 'مرتجع', colNo: 'م', colItem: 'الصنف', colUnit: 'الوحدة', colQty: 'الكمية', colPrice: 'السعر', colTotal: 'الإجمالي', colWar: 'الضمان', subtotal: 'الإجمالي', discount: 'الخصم', net: 'الصافي', change: 'الباقي', credit: 'آجل على العميل', walkin: 'نقدي', topNote: '', footNote: '' };
     Object.keys(lb).forEach(function (k) { if (d.lbl[k] === undefined) d.lbl[k] = lb[k]; });
     return d;
   };
@@ -56,13 +56,15 @@ A4.cols = function (cols, rows) {
 A4.invoice = function (s) {
   var d = docCfg(), sh = d.show, cu = H.cust(s.customer), ret = s.type === 'return';
   var hasW = sh.warranty && s.items.some(function (i) { var p = i.pid && Store.product(i.pid); return p && U.n(p.warranty) > 0; });
-  var cols = [['colNo', 'colNo'], ['colItem'], ['colUnit', 'unit'], ['colQty'], ['colPrice', 'colPrice'], ['colTotal']].concat(hasW ? [['colWar', 'warranty']] : []);
+  var cols = [['colNo', 'colNo'], ['colCode', 'colCode'], ['colItem'], ['colUnit', 'unit'], ['colQty'], ['colPrice', 'colPrice'], ['colTotal']].concat(hasW ? [['colWar', 'warranty']] : []);
+  var code = function (i) { var p = i.pid && Store.product(i.pid); return p ? U.esc(p.code || (p.barcodes || [])[0] || '') : ''; };
   var rows = s.items.map(function (i, x) {
     var p = i.pid && Store.product(i.pid);
-    return [x + 1, U.esc(i.name) + (i.serial ? '<br><span class="badge">S/N: ' + U.esc(i.serial) + '</span>' : '') + (i.base > i.price && i.promo ? '<br><span class="badge">★ ' + U.esc(i.promo) + '</span>' : ''), U.esc(p ? Meas.unitName(p) : '—'), U.r2(i.qty), (i.base > i.price ? '<s style="color:#888">' + U.money(i.base) + '</s><br>' : '') + U.money(i.price), U.money(i.qty * i.price)].concat(hasW ? [p && U.n(p.warranty) > 0 ? p.warranty + L(' شهر', ' mo') : '—'] : []);
+    return [x + 1, code(i), U.esc(i.name) + (i.serial ? '<br><span class="badge">S/N: ' + U.esc(i.serial) + '</span>' : '') + (i.base > i.price && i.promo ? '<br><span class="badge">★ ' + U.esc(i.promo) + '</span>' : ''), U.esc(p ? Meas.unitName(p) : '—'), U.r2(i.qty), (i.base > i.price ? '<s style="color:#888">' + U.money(i.base) + '</s><br>' : '') + U.money(i.price), U.money(i.qty * i.price)].concat(hasW ? [p && U.n(p.warranty) > 0 ? p.warranty + L(' شهر', ' mo') : '—'] : []);
   });
   var meta = [];
   if (sh.mNo) meta.push([DL('saleNo'), '<b>' + s.no + '</b>', 'mNo']);
+  if (sh.mType) meta.push([DL('mType'), ret ? DL('typeRet') : (U.n(s.credit) > 0 ? DL('typeCredit') : DL('typeCash')), 'mType']);
   if (sh.mDate) meta.push([DL('date'), U.dt(s.date), 'mDate']);
   if (sh.mCust) meta.push([DL('to'), cu ? U.esc(cu.name) : DL('walkin'), 'mCust']);
   if (sh.mMobile) meta.push([DL('mobile'), cu && cu.phone ? '<span dir="ltr">' + U.esc(cu.phone) + '</span>' : '—', 'mMobile']);
@@ -83,8 +85,8 @@ A4.invoice = function (s) {
 /* ---------- quotation ---------- */
 Quote.html = function (q) {
   var sh = docCfg().show, cu = q.customer ? H.cust(q.customer) : null, name = q.name || (cu && cu.name) || '';
-  var cols = [['colNo', 'colNo'], ['colItem'], ['colUnit', 'unit'], ['colQty'], ['colPrice', 'colPrice'], ['colTotal']];
-  var rows = q.items.map(function (i, x) { var p = i.pid && Store.product(i.pid); return [x + 1, U.esc(i.name), U.esc(p ? Meas.unitName(p) : '—'), U.r2(i.qty), U.money(i.price), U.money(i.qty * i.price)]; });
+  var cols = [['colNo', 'colNo'], ['colCode', 'colCode'], ['colItem'], ['colUnit', 'unit'], ['colQty'], ['colPrice', 'colPrice'], ['colTotal']];
+  var rows = q.items.map(function (i, x) { var p = i.pid && Store.product(i.pid); return [x + 1, p ? U.esc(p.code || (p.barcodes || [])[0] || '') : '', U.esc(i.name), U.esc(p ? Meas.unitName(p) : '—'), U.r2(i.qty), U.money(i.price), U.money(i.qty * i.price)]; });
   var tr = []; if (sh.subtotal) tr.push([DL('subtotal'), U.money(q.sub), 0, 'subtotal']); if (q.disc && sh.discount) tr.push([DL('discount'), '- ' + U.money(q.disc), 0, 'discount']); if (q.vat) tr.push([L('الضريبة', 'VAT'), U.money(q.vat)]); if (sh.netRow) tr.push([DL('net'), U.money(q.total) + ' ' + cur(), 1, 'netRow']);
   var meta = []; if (sh.mNo) meta.push([DL('quoteNo'), '<b>' + q.no + '</b>', 'mNo']); if (sh.mDate) meta.push([DL('date'), U.dt(q.date), 'mDate']); if (sh.mCust) meta.push([DL('to'), U.esc(name || '—'), 'mCust']); if (sh.mMobile) meta.push([DL('mobile'), '<span dir="ltr">' + U.esc(q.phone || (cu && cu.phone) || '—') + '</span>', 'mMobile']); meta.push([DL('valid'), q.valid || '—']); if (sh.seller) meta.push([DL('by'), U.esc(q.by), 'seller']);
   return A4.head({ k: 'quoteTitle' }, meta) + A4.topNote() + A4.cols(cols, rows) + A4.totals(tr, q.total) + (q.note ? '<div class="terms">' + U.esc(q.note) + '</div>' : '') + A4.termsBlock('quote') + A4.sign(A4.sigs(name, false)) + A4.foot();
@@ -113,8 +115,8 @@ var DocLive = {
     frame.srcdoc = '<!doctype html><html dir="' + (lang() === 'en' ? 'ltr' : 'rtl') + '"><head><meta charset="utf-8"><style>' + r.css.replace(/@page\{[^}]*\}/, '') + 'html{background:#8a93a3}body{background:#fff;width:' + pw + 'mm;min-height:' + ph + 'mm;margin:10px auto;padding:' + (U.n(d.margin) || 10) + 'mm;box-sizing:border-box;box-shadow:0 6px 24px rgba(0,0,0,.35)}[data-dk]{cursor:pointer;transition:outline .1s}[data-dk]:hover{outline:2px dashed #e11d48;outline-offset:2px;background:rgba(225,29,72,.06)}</style></head><body>' + r.body + '</body></html>';
   }
 };
-var DK_NAMES = { logo: 'اللوجو', slogan: 'الشعار تحت اسم المحل', shopAddr: 'عنوان المحل', shopPhones: 'تليفونات المحل', tax: 'الرقم الضريبي والسجل', title: 'عنوان المستند', mNo: 'رقم الفاتورة', mDate: 'التاريخ', mCust: 'اسم العميل', mMobile: 'موبايل العميل', mAddr: 'عنوان العميل', seller: 'البائع', subtotal: 'سطر الإجمالي', discount: 'سطر الخصم', netRow: 'سطر الصافي', payments: 'طرق الدفع والباقي والآجل', words: 'المبلغ بالحروف', terms: 'الشروط', sign: 'التوقيعات', inst: 'بيانات التقسيط', unit: 'عمود الوحدة', colNo: 'عمود الترقيم', colPrice: 'عمود السعر', warranty: 'عمود الضمان', foot: 'سطر «طُبع بواسطة»', sigNames: 'الأسماء تحت التوقيع', sigCustOn: 'خانة توقيع العميل', sigMgrOn: 'خانة توقيع المسئول', sigStampOn: 'خانة الختم' };
-var LBL_SHOW = { sigCust: 'sigCustOn', sigMgr: 'sigMgrOn', sigStamp: 'sigStampOn', colUnit: 'unit', colNo: 'colNo', colPrice: 'colPrice', colWar: 'warranty', subtotal: 'subtotal', discount: 'discount', net: 'netRow', saleNo: 'mNo', quoteNo: 'mNo', date: 'mDate', to: 'mCust', mobile: 'mMobile', address: 'mAddr', seller: 'seller', by: 'seller', saleTitle: 'title', quoteTitle: 'title', retTitle: 'title', termsTitle: 'terms', change: 'payments', credit: 'payments', walkin: '' };
+var DK_NAMES = { colCode: 'عمود كود الصنف', mType: 'نوع الفاتورة (نقدي/آجل)', logo: 'اللوجو', slogan: 'الشعار تحت اسم المحل', shopAddr: 'عنوان المحل', shopPhones: 'تليفونات المحل', tax: 'الرقم الضريبي والسجل', title: 'عنوان المستند', mNo: 'رقم الفاتورة', mDate: 'التاريخ', mCust: 'اسم العميل', mMobile: 'موبايل العميل', mAddr: 'عنوان العميل', seller: 'البائع', subtotal: 'سطر الإجمالي', discount: 'سطر الخصم', netRow: 'سطر الصافي', payments: 'طرق الدفع والباقي والآجل', words: 'المبلغ بالحروف', terms: 'الشروط', sign: 'التوقيعات', inst: 'بيانات التقسيط', unit: 'عمود الوحدة', colNo: 'عمود الترقيم', colPrice: 'عمود السعر', warranty: 'عمود الضمان', foot: 'سطر «طُبع بواسطة»', sigNames: 'الأسماء تحت التوقيع', sigCustOn: 'خانة توقيع العميل', sigMgrOn: 'خانة توقيع المسئول', sigStampOn: 'خانة الختم' };
+var LBL_SHOW = { colCode: 'colCode', mType: 'mType', typeCash: 'mType', typeCredit: 'mType', typeRet: 'mType', sigCust: 'sigCustOn', sigMgr: 'sigMgrOn', sigStamp: 'sigStampOn', colUnit: 'unit', colNo: 'colNo', colPrice: 'colPrice', colWar: 'warranty', subtotal: 'subtotal', discount: 'discount', net: 'netRow', saleNo: 'mNo', quoteNo: 'mNo', date: 'mDate', to: 'mCust', mobile: 'mMobile', address: 'mAddr', seller: 'seller', by: 'seller', saleTitle: 'title', quoteTitle: 'title', retTitle: 'title', termsTitle: 'terms', change: 'payments', credit: 'payments', walkin: '' };
 DocSet.open = function () {
   if (!can('settings')) return toast(L('ده من صلاحية المدير', 'Admin only'), 'bad');
   DocSet.mount(null);
@@ -122,8 +124,8 @@ DocSet.open = function () {
 /* host given → the editor lives inside the page and every change is saved on the spot */
 DocSet.mount = function (host) {
   var inline = !!host, w = inline ? docCfg() : U.clone(docCfg()), kind = 'sale';
-  var SHOWS = ['title', 'logo', 'slogan', 'shopAddr', 'shopPhones', 'tax', 'mNo', 'mDate', 'mCust', 'mMobile', 'mAddr', 'seller', 'colNo', 'unit', 'colPrice', 'warranty', 'subtotal', 'discount', 'netRow', 'payments', 'words', 'inst', 'terms', 'sign', 'sigCustOn', 'sigMgrOn', 'sigStampOn', 'sigNames', 'foot'];
-  var LB = [['saleTitle', 'عنوان فاتورة البيع'], ['saleNo', '«رقم الفاتورة»'], ['retTitle', 'عنوان المرتجع'], ['quoteTitle', 'عنوان عرض السعر'], ['quoteNo', '«رقم العرض»'], ['to', 'كلمة العميل'], ['walkin', 'لو مفيش عميل'], ['mobile', '«الموبايل»'], ['address', '«العنوان»'], ['date', '«التاريخ»'], ['valid', '«ساري حتى»'], ['by', '«مقدم العرض»'], ['seller', '«البائع»'], ['colNo', 'عمود الترقيم'], ['colItem', 'عمود الصنف'], ['colUnit', 'عمود الوحدة'], ['colQty', 'عمود الكمية'], ['colPrice', 'عمود السعر'], ['colTotal', 'عمود الإجمالي'], ['colWar', 'عمود الضمان'], ['subtotal', 'سطر الإجمالي'], ['discount', 'سطر الخصم'], ['net', 'سطر الصافي'], ['change', 'الباقي'], ['credit', 'الآجل'], ['termsTitle', 'عنوان الشروط'], ['sigCust', 'توقيع العميل'], ['sigMgr', 'توقيع المسئول'], ['sigStamp', 'الختم'], ['mgrName', 'اسم المسئول (فاضي = صاحب المحل)'], ['topNote', 'جملة فوق الأصناف (اختياري)'], ['footNote', 'جملة في آخر الورقة (اختياري)']];
+  var SHOWS = ['title', 'mType', 'colCode', 'logo', 'slogan', 'shopAddr', 'shopPhones', 'tax', 'mNo', 'mDate', 'mCust', 'mMobile', 'mAddr', 'seller', 'colNo', 'unit', 'colPrice', 'warranty', 'subtotal', 'discount', 'netRow', 'payments', 'words', 'inst', 'terms', 'sign', 'sigCustOn', 'sigMgrOn', 'sigStampOn', 'sigNames', 'foot'];
+  var LB = [['colCode', 'عمود كود الصنف'], ['mType', '«نوع الفاتورة»'], ['typeCash', 'نقدي'], ['typeCredit', 'آجل'], ['saleTitle', 'عنوان فاتورة البيع'], ['saleNo', '«رقم الفاتورة»'], ['retTitle', 'عنوان المرتجع'], ['quoteTitle', 'عنوان عرض السعر'], ['quoteNo', '«رقم العرض»'], ['to', 'كلمة العميل'], ['walkin', 'لو مفيش عميل'], ['mobile', '«الموبايل»'], ['address', '«العنوان»'], ['date', '«التاريخ»'], ['valid', '«ساري حتى»'], ['by', '«مقدم العرض»'], ['seller', '«البائع»'], ['colNo', 'عمود الترقيم'], ['colItem', 'عمود الصنف'], ['colUnit', 'عمود الوحدة'], ['colQty', 'عمود الكمية'], ['colPrice', 'عمود السعر'], ['colTotal', 'عمود الإجمالي'], ['colWar', 'عمود الضمان'], ['subtotal', 'سطر الإجمالي'], ['discount', 'سطر الخصم'], ['net', 'سطر الصافي'], ['change', 'الباقي'], ['credit', 'الآجل'], ['termsTitle', 'عنوان الشروط'], ['sigCust', 'توقيع العميل'], ['sigMgr', 'توقيع المسئول'], ['sigStamp', 'الختم'], ['mgrName', 'اسم المسئول (فاضي = صاحب المحل)'], ['topNote', 'جملة فوق الأصناف (اختياري)'], ['footNote', 'جملة في آخر الورقة (اختياري)']];
   var H2 = inline ? 'calc(100vh - 250px)' : '68vh';
   var BODY =
     '<div class="grid" style="grid-template-columns:380px 1fr;gap:14px;align-items:start"><div class="col" style="max-height:' + (inline ? 'calc(100vh - 210px)' : '72vh') + ';overflow:auto;padding-inline-end:4px">' +

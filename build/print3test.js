@@ -9,8 +9,8 @@ const OUT = '/home/claude/ghandi-home/build/shots/p3'; require('fs').mkdirSync(O
   await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); S().invoice.paper = 'A4'; go('invoice'); }); await pg.waitForTimeout(1200);
   await pg.screenshot({ path: OUT + '/01_editor_1366.png' });
   console.log('buttons visible:', await pg.evaluate(() => { var r = document.querySelector('#lvTest').getBoundingClientRect(); return r.bottom < innerHeight && r.top > 0; }), 'preview bottom in view:', await pg.evaluate(() => document.querySelector('#lvF2').getBoundingClientRect().bottom <= innerHeight));
-  console.log('templates:', await pg.evaluate(() => document.querySelectorAll('#lvT option').length));
-  for (const t of ['royal', 'sidebar', 'corporate', 'zebra', 'frame', 'soft', 'bold', 'gridline', 'centered', 'receipt']) { await pg.selectOption('#lvT', t); await pg.waitForTimeout(350); await pg.screenshot({ path: `${OUT}/t_${t}.png` }); }
+  console.log('code col on:', await pg.evaluate(() => 0)); console.log('templates:', await pg.evaluate(() => document.querySelectorAll('#lvT option').length));
+  for (const t of ['ws', 'wsBlue', 'wsLine', 'wsDark', 'wsFrame', 'royal', 'sidebar', 'corporate', 'zebra', 'frame', 'soft', 'bold', 'gridline', 'centered', 'receipt']) { await pg.selectOption('#lvT', t); await pg.waitForTimeout(350); await pg.screenshot({ path: `${OUT}/t_${t}.png` }); }
   await pg.selectOption('#lvT', 'classic');
   await pg.fill('#opW', 'أصلي'); await pg.evaluate(() => { var i = document.querySelector('#opC'); i.value = '#8b1e3f'; i.dispatchEvent(new Event('input')); }); await pg.selectOption('#opF', '"Times New Roman"'); await pg.fill('#opL', '110'); await pg.check('#opB'); await pg.waitForTimeout(400);
   await pg.screenshot({ path: OUT + '/02_options.png' });
