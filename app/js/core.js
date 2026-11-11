@@ -29,7 +29,7 @@ var Vault = {
   },
   read: function (file) { var b = NODE.fs.readFileSync(file); return Vault.isSealed(b) ? Vault.open(b) : b.toString('utf8'); }
 };
-var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.9.2', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
+var APP = { name: 'Ghandi Home', nameAr: 'غاندي', version: '1.9.3', dev: 'م. محمد علي', devEn: 'Eng. Mohamed Ali', phone: '01098811581' };
 
 /* ---------- small utils ---------- */
 var U = {
@@ -570,7 +570,7 @@ var Printer = {
     var doc = '<!doctype html><html dir="' + (opt.dir || 'rtl') + '"><head><meta charset="utf-8"><style>' + (opt.css || '') + '</style></head><body>' + html + '</body></html>';
     if (IS_ELECTRON) {
       var ms = opt.mediaSize ? { width: opt.mediaSize.width_microns, height: opt.mediaSize.height_microns } : null;
-      IPC.invoke('print', { html: doc, printer: opt.printer || '', silent: !!opt.silent, copies: opt.copies || 1, pageSize: ms }).then(function (r) { if (r && !r.ok && r.error && r.error !== 'cancelled') toast(L('الطباعة: ', 'Print: ') + r.error, 'bad'); });
+      IPC.invoke('print', { html: doc, printer: opt.printer || '', silent: !!opt.silent, copies: opt.copies || 1, pageSize: ms, pageName: !ms ? ((/@page\{size:(A4|A5|letter)/i.exec(opt.css || '') || [])[1] || '') : '' }).then(function (r) { if (r && !r.ok && r.error && r.error !== 'cancelled') toast(L('الطباعة: ', 'Print: ') + r.error, 'bad'); });
       return;
     }
     if (IS_NW) {
