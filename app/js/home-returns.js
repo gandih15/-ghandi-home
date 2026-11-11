@@ -149,3 +149,72 @@ var RetReq = {
   var sr = Shell.render, told = null;
   Shell.render = function () { var r = sr.apply(this, arguments); try { if (App.user && told !== App.user.id) { told = App.user.id; var n = RetReq.approver() ? RetReq.pending().length : 0; if (n) setTimeout(function () { toast('📨 ' + n + L(' طلب مرتجع مستني موافقتك — من «الفواتير والمرتجع»', ' return request(s) waiting for you'), 'warn'); }, 900); } } catch (e) { } return r; };
 })();
+
+/* ================= developer policy for all cashiers: invoices & returns ================= */
+var CashPol = {
+  get: function () { return devS().cashPol || null; },
+  on: function () { var p = CashPol.get(); return !!(p && p.on) && !!App.user && App.user.role !== 'admin' && !App.user.dev; },
+  perm: function (k) { // undefined = not decided by the policy
+    if (!CashPol.on()) return undefined; var p = CashPol.get();
+    if (k === 'sales.history') return true;
+    if (k === 'pos.return') return p.ret === 'direct';
+    if (k === 'pos.returnReq') return p.ret === 'req';
+    if (k === 'pos.reprint') return !!p.reprint;
+    if (k === 'sales.all') return !!p.all;
+    return undefined;
+  },
+  days: function () { return CashPol.on() ? U.n(CashPol.get().days) : U.n(((App.user || {}).perms || {})['sales.days']); },
+  card: function () {
+    var d = devS(), p = d.cashPol = d.cashPol || { on: false, ret: 'req', days: 1, all: false, reprint: true };
+    var c = document.createElement('div'); c.className = 'card col'; c.id = 'dvCash';
+    var opt = function (v, t, cur) { return '<option value="' + v + '"' + (String(cur) === String(v) ? ' selected' : '') + '>' + t + '</option>'; };
+    c.innerHTML = '<h3>🧾 ' + L('الكاشيرية: الفواتير والمرتجع', 'Cashiers: invoices & returns') + '</h3>' +
+      '<label class="row"><input type="checkbox" class="sw" id="cpOn"' + (p.on ? ' checked' : '') + '> <b>' + L('طبّق القواعد دي على كل الكاشيرية (أي حد مش مدير)', 'Apply these rules to every non-admin user') + '</b></label>' +
+      '<div class="grid g2"><label class="f">↩️ ' + L('المرتجع', 'Returns') + '<select class="in" id="cpRet">' + opt('req', 'بموافقة المدير (يطلب والمدير يوافق)', p.ret) + opt('direct', 'مباشر من غير موافقة', p.ret) + opt('no', 'ممنوع', p.ret) + '</select></label>' +
+      '<label class="f">📅 ' + L('يرجع لفواتير', 'Can look back at') + '<select class="in" id="cpDays">' + [[1, 'النهارده بس'], [2, 'النهارده وامبارح'], [7, 'آخر 7 أيام'], [30, 'الشهر ده'], [90, 'آخر 3 شهور'], [0, 'كل الفواتير']].map(function (o) { return opt(o[0], o[1], p.days); }).join('') + '</select></label>' +
+      '<label class="f">👥 ' + L('يشوف', 'Sees') + '<select class="in" id="cpAll">' + opt('0', 'فواتيره هو بس', p.all ? 1 : 0) + opt('1', 'فواتير كل الكاشيرية', p.all ? 1 : 0) + '</select></label>' +
+      '<label class="row" style="align-self:end"><input type="checkbox" class="sw" id="cpRp"' + (p.reprint ? ' checked' : '') + '> 🖨️ ' + L('يطبع أي فاتورة من دول تاني', 'Can reprint them') + '</label></div>' +
+      '<div class="muted small">' + L('لما تكون شغالة: كل كاشير بيلاقي «الفواتير والمرتجع» في القايمة، بيبحث برقم الفاتورة، وبيشوف الفواتير في المدة دي بس، والمرتجع على حسب اختيارك. صاحب المحل مايقدرش يغيّرها من الصلاحيات. لو مقفولة: كل كاشير على حسب صلاحياته اللي صاحب المحل حددها.', 'When on, these rules override each cashier\'s own permissions.') + '</div>';
+    var sv = function () { Store.log('dev.cashPol', JSON.stringify(p)); Store.save(); toast(L('اتحفظ', 'Saved'), 'ok'); };
+    $('#cpOn', c).onchange = function () { p.on = this.checked; sv(); };
+    $('#cpRet', c).onchange = function () { p.ret = this.value; sv(); };
+    $('#cpDays', c).onchange = function () { p.days = U.n(this.value); sv(); };
+    $('#cpAll', c).onchange = function () { p.all = this.value === '1'; sv(); };
+    $('#cpRp', c).onchange = function () { p.reprint = this.checked; sv(); };
+    return c;
+  }
+};
+(function () {
+  var c0 = can;
+  can = function (p) { if (p === 'pos.return' && RetReq.fake) return true; var v = CashPol.perm(p); if (v !== undefined) return v && !(FEAT_BY_PERM[p] && !F(FEAT_BY_PERM[p])); return c0(p); };
+  RetReq.minDate = (function () {
+    return function () {
+      if (!App.user || App.user.role === 'admin' || App.user.dev) return 0;
+      var d = CashPol.days(); if (!d) return 0;
+      var t = new Date(); t.setHours(0, 0, 0, 0);
+      if (d === 30) t.setDate(1); else t.setDate(t.getDate() - (d - 1));
+      return t.getTime();
+    };
+  })();
+  var dl = RetReq.daysLabel; RetReq.daysLabel = function () { var d = CashPol.days(); return ({ 1: L('فواتير النهارده بس', 'today only'), 2: L('النهارده وامبارح', 'today & yesterday'), 7: L('آخر 7 أيام', 'last 7 days'), 30: L('الشهر ده', 'this month'), 90: L('آخر 3 شهور', 'last 3 months') })[d] || ''; void dl; };
+  // developer panel: the shop-rule cards go right at the top so they are easy to find
+  var dv = Views.dev;
+  Views.dev = function (el) {
+    var r = dv.apply(this, arguments); if (!Dev.unlocked) return r;
+    var hero = $('.dev-hero', el); if (!hero) return r;
+    var top = document.createElement('div'); top.className = 'grid g2'; top.id = 'dvTop'; top.style.cssText = 'align-items:start;margin-top:16px';
+    var cards = [CashPol.card()];
+    ['#dvRep', '#pgOn'].forEach(function (s) { var x = $(s, el), cd = x && x.closest('.card'); if (cd) { cd.style.gridColumn = ''; cards.push(cd); } });
+    cards.forEach(function (cd) { top.appendChild(cd); });
+    hero.parentNode.insertBefore(top, hero.nextSibling);
+    var h = document.createElement('div'); h.className = 'muted small'; h.style.cssText = 'margin:14px 2px 0'; h.textContent = '⚡ ' + L('قواعد المحل — اللي بتفرضها على صاحب المحل والكاشيرية', 'Shop rules you enforce'); hero.parentNode.insertBefore(h, top);
+    return r;
+  };
+})();
+(function () {
+  var ue = Views.users.edit;
+  Views.users.edit = function () {
+    var r = ue.apply(this, arguments); try { var p = CashPol.get(), m = $$('.mask').pop(), pl = m && $('#pl', m); if (p && p.on && pl) { var n = document.createElement('div'); n.className = 'chip warn'; n.style.cssText = 'display:block;white-space:normal;margin-bottom:8px'; n.textContent = '🛠️ ' + L('الفواتير والمرتجع وإعادة الطباعة للكاشيرية متحددين من المطوّر — الاختيارات دي هنا مش هتغيّرهم.', 'Invoices, returns & reprint for cashiers are set by the developer.'); pl.parentNode.insertBefore(n, pl); } } catch (e) { }
+    return r;
+  };
+})();
