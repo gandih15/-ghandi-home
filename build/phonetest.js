@@ -1,0 +1,21 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const OUT = '/home/claude/ghandi-home/build/shots/live';
+(async () => {
+  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
+  const pg = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message));
+  await pg.goto('file:///home/claude/ghandi-home/app/index.html?demo&reset'); await pg.waitForTimeout(2500);
+  await pg.fill('#lp', '1234'); await pg.click('#lb'); await pg.waitForTimeout(1500);
+  await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); go('shop'); }); await pg.waitForTimeout(700);
+  await pg.fill('[data-pn="0"]', 'أ. محمد — المبيعات'); await pg.click('#phAdd'); await pg.fill('[data-pn="1"]', 'أ. أحمد — الحسابات'); await pg.fill('[data-pp="1"]', '01112223344');
+  await pg.click('#phAdd'); await pg.fill('[data-pn="2"]', 'الصيانة'); await pg.fill('[data-pp="2"]', '01223334455'); await pg.waitForTimeout(300);
+  await pg.evaluate(() => document.querySelector('#phCard').scrollIntoView({ block: 'center' })); await pg.waitForTimeout(300);
+  await pg.screenshot({ path: OUT + '/20_phones.png' });
+  console.log('thermal:', await pg.evaluate(() => document.querySelector('#sprev').innerText.split('\n').filter(l => /☎/.test(l)).join(' ')));
+  console.log('shopPhone synced:', await pg.evaluate(() => S().shopPhone + ' / ' + S().shopPhone2));
+  await pg.evaluate(() => { S().invoice.paper = 'A4'; go('invoice'); }); await pg.waitForTimeout(1000);
+  console.log('a4:', await pg.evaluate(() => document.querySelector('#lvF2').contentDocument.body.innerText.split('\n').filter(l => /☎/.test(l)).join(' ')));
+  await pg.screenshot({ path: OUT + '/21_a4_phones.png' });
+  await pg.click('#ipaper [data-v="80"]'); await pg.waitForTimeout(600); await pg.screenshot({ path: OUT + '/22_thermal_phones.png' });
+  console.log('ERRORS:', errs.length ? errs.join('\n') : 'none'); await b.close();
+})();

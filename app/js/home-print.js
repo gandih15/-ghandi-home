@@ -180,7 +180,7 @@ var DocSet = {
 
 /* ================= developer reset tools ================= */
 var Reset = {
-  SHOP_KEYS: ['shopName', 'shopNameEn', 'slogan', 'ownerName', 'shopPhone', 'shopPhone2', 'whatsapp', 'facebook', 'instagram', 'shopAddress', 'taxNo', 'crNo', 'logo', 'currency', 'currencyEn', 'lang'],
+  SHOP_KEYS: ['shopName', 'shopNameEn', 'slogan', 'ownerName', 'shopPhone', 'shopPhone2', 'phones', 'whatsapp', 'facebook', 'instagram', 'shopAddress', 'taxNo', 'crNo', 'logo', 'currency', 'currencyEn', 'lang'],
   GROUPS: [
     ['sales', '🧾 المبيعات والمرتجعات والفواتير المعلقة والحجز', ['sales', 'held', 'layaways', 'trash'], ['invoice'], true],
     ['purchases', '🚚 المشتريات ومرتجعات الموردين وطلبات الشراء', ['purchases', 'porders'], ['purchase'], true],

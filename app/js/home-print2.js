@@ -21,7 +21,7 @@ var Dshow = function (k) { return docCfg().show[k] !== false; };
 
 A4.head = function (title, meta, sub) {
   var st = S(), en = lang() === 'en', sh = docCfg().show;
-  var lines = [sh.slogan && st.slogan ? DK('show:slogan', U.esc(st.slogan)) : '', sh.shopAddr && st.shopAddress ? DK('show:shopAddr', U.esc(st.shopAddress)) : '', sh.shopPhones && (st.shopPhone || st.shopPhone2) ? DK('show:shopPhones', U.esc([st.shopPhone, st.shopPhone2].filter(Boolean).join(' / '))) : '', sh.tax && (st.taxNo || st.crNo) ? DK('show:tax', U.esc([st.taxNo ? L('رقم ضريبي ', 'Tax no. ') + st.taxNo : '', st.crNo ? L('سجل تجاري ', 'C.R. ') + st.crNo : ''].filter(Boolean).join(' · '))) : ''].filter(Boolean);
+  var lines = [sh.slogan && st.slogan ? DK('show:slogan', U.esc(st.slogan)) : '', sh.shopAddr && st.shopAddress ? DK('show:shopAddr', U.esc(st.shopAddress)) : '', sh.shopPhones && ShopPhones.shown().length ? DK('show:shopPhones', ShopPhones.a4()): '', sh.tax && (st.taxNo || st.crNo) ? DK('show:tax', U.esc([st.taxNo ? L('رقم ضريبي ', 'Tax no. ') + st.taxNo : '', st.crNo ? L('سجل تجاري ', 'C.R. ') + st.crNo : ''].filter(Boolean).join(' · '))) : ''].filter(Boolean);
   var titleHtml = typeof title === 'object' ? DK('lbl:' + title.k, U.esc(DocLbl(title.k))) : U.esc(title);
   return '<div class="a4"><div class="a4h"><div class="shop">' + (st.logo ? DK('show:logo', '<img src="' + st.logo + '">') : '') + '<div><h1>' + U.esc(shopName(en)) + '</h1><div class="sm">' + lines.join('<br>') + '</div></div></div>' +
     (sh.title || typeof title !== 'object' ? DK('show:title', '<div class="a4t">' + titleHtml + (sub ? '<small>' + sub + '</small>' : '') + '</div>') : '<div></div>') + '</div>' +
@@ -242,5 +242,49 @@ var PriceGuard = {
     host.appendChild(c);
     $('#pgOn', c).onchange = function () { d.minPrice = this.checked; Store.log('dev.minPrice', String(d.minPrice)); Store.save(); toast(L('اتحفظ', 'Saved'), 'ok'); };
     $('#pgAll', c).onchange = function () { d.minPriceAll = this.checked; Store.save(); toast(L('اتحفظ', 'Saved'), 'ok'); };
+  };
+})();
+
+/* ================= shop phones with names (who answers each number) ================= */
+var ShopPhones = {
+  list: function () {
+    var st = S();
+    if (!Array.isArray(st.phones)) st.phones = [st.shopPhone, st.shopPhone2].filter(Boolean).map(function (p) { return { n: '', p: p, on: true }; });
+    return st.phones;
+  },
+  shown: function () { return ShopPhones.list().filter(function (x) { return x.on !== false && String(x.p || '').trim(); }); },
+  sync: function () { var a = ShopPhones.list().filter(function (x) { return String(x.p || '').trim(); }), st = S(); st.shopPhone = a[0] ? a[0].p.trim() : ''; st.shopPhone2 = a[1] ? a[1].p.trim() : ''; },
+  one: function (x) { return '<span style="white-space:nowrap;display:inline-block">' + (x.n ? '<b>' + U.esc(x.n) + ':</b> ' : '') + '<span dir="ltr">' + U.esc(x.p) + '</span></span>'; },
+  receipt: function () { return '<div style="text-align:center;color:#222;line-height:1.55">' + ShopPhones.shown().map(function (x) { return '<div>☎ ' + ShopPhones.one(x) + '</div>'; }).join('') + '</div>'; },
+  a4: function () { return '☎ ' + ShopPhones.shown().map(ShopPhones.one).join(' &nbsp;·&nbsp; '); },
+  card: function (after) {
+    var c = document.createElement('div'); c.className = 'card col'; c.id = 'phCard';
+    var draw = function () {
+      var a = ShopPhones.list();
+      c.innerHTML = '<h3>📞 ' + L('أرقام المحل على الفاتورة — اسم قصاد كل رقم', 'Shop numbers on the invoice — a name for each') + '</h3><div class="muted small">' + L('اكتب اسم الشخص قصاد رقمه (مثلاً: أ. محمد — المبيعات) عشان اللي بيتصل يعرف يكلّم مين. علّم على «يظهر» للأرقام اللي تطلع على الفاتورة.', 'Write who answers each number so callers know whom to ask for. Tick “show” for numbers printed on invoices.') + '</div>' +
+        a.map(function (x, i) { return '<div class="row" style="gap:8px"><input class="in" style="flex:1.2" data-pn="' + i + '" placeholder="' + L('الاسم (مثلاً: أ. محمد)', 'Name') + '" value="' + U.esc(x.n || '') + '"><input class="in num" style="flex:1;direction:ltr" data-pp="' + i + '" placeholder="01xxxxxxxxx" value="' + U.esc(x.p || '') + '"><label class="row small" style="white-space:nowrap"><input type="checkbox" data-po="' + i + '"' + (x.on !== false ? ' checked' : '') + '> ' + L('يظهر', 'show') + '</label><button class="btn sm ghost" data-pu="' + i + '" title="' + L('لفوق', 'Up') + '">▲</button><button class="btn sm ghost" data-pd="' + i + '" style="color:var(--bad)">✕</button></div>'; }).join('') +
+        '<button class="btn" id="phAdd" style="align-self:flex-start">➕ ' + L('رقم جديد', 'Add number') + '</button>';
+      var ch = function () { ShopPhones.sync(); Store.save(); if (after) after(); };
+      $$('[data-pn]', c).forEach(function (i) { i.oninput = function () { a[+i.dataset.pn].n = i.value; ch(); }; });
+      $$('[data-pp]', c).forEach(function (i) { i.oninput = function () { a[+i.dataset.pp].p = i.value.trim(); ch(); }; });
+      $$('[data-po]', c).forEach(function (i) { i.onchange = function () { a[+i.dataset.po].on = i.checked; ch(); }; });
+      $$('[data-pd]', c).forEach(function (b) { b.onclick = function () { a.splice(+b.dataset.pd, 1); ch(); draw(); }; });
+      $$('[data-pu]', c).forEach(function (b) { b.onclick = function () { var i = +b.dataset.pu; if (!i) return; a.splice(i - 1, 0, a.splice(i, 1)[0]); ch(); draw(); }; });
+      $('#phAdd', c).onclick = function () { a.push({ n: '', p: '', on: true }); draw(); var l = $$('[data-pn]', c).pop(); l && l.focus(); };
+    };
+    draw(); return c;
+  }
+};
+(function () {
+  var vs = Views.shop;
+  Views.shop = function (el) {
+    var r = vs.apply(this, arguments);
+    // the two old phone boxes are replaced by the named list
+    ['shopPhone', 'shopPhone2'].forEach(function (k) { var i = $('[data-k="' + k + '"]', el); if (i) i.closest('label').style.display = 'none'; });
+    var own = $$('.card', el).filter(function (c) { return $('[data-k="ownerName"]', c); })[0];
+    var redraw = function () { var p = $('#sprev'); if (p) p.innerHTML = Receipt.html(Shop.sample()); };
+    var card = ShopPhones.card(redraw);
+    if (own) own.parentNode.insertBefore(card, own.nextSibling); else el.appendChild(card);
+    return r;
   };
 })();

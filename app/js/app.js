@@ -506,7 +506,7 @@ var Receipt = {
     if (cfg.showShop) h += '<div style="text-align:center;font-weight:800;font-size:' + (fs + 5) + 'px;margin-top:4px">' + U.esc(shopName(en)) + '</div>' + (st.slogan ? '<div style="text-align:center;font-size:' + (fs - 1) + 'px;color:#333">' + U.esc(st.slogan) + '</div>' : '');
     if (cfg.header) h += '<div style="text-align:center;margin-top:2px">' + U.esc(cfg.header) + '</div>';
     if (cfg.showAddress && st.shopAddress) h += '<div style="text-align:center;color:#444">' + U.esc(st.shopAddress) + '</div>';
-    if (cfg.showPhone && (st.shopPhone || st.shopPhone2)) h += '<div style="text-align:center;color:#444" dir="ltr">☎ ' + U.esc([st.shopPhone, st.shopPhone2].filter(Boolean).join(' / ')) + '</div>';
+    if (cfg.showPhone && (typeof ShopPhones !== 'undefined' ? ShopPhones.shown().length : (st.shopPhone || st.shopPhone2))) h += typeof ShopPhones !== 'undefined' ? ShopPhones.receipt() : '<div style="text-align:center;color:#444" dir="ltr">☎ ' + U.esc([st.shopPhone, st.shopPhone2].filter(Boolean).join(' / ')) + '</div>';
     if (cfg.showTaxNo && (st.taxNo || st.crNo)) h += '<div style="text-align:center;color:#444;font-size:' + (fs - 2) + 'px">' + [st.taxNo ? (en ? 'Tax no. ' : 'رقم ضريبي ') + U.esc(st.taxNo) : '', st.crNo ? (en ? 'C.R. ' : 'س.ت ') + U.esc(st.crNo) : ''].filter(Boolean).join(' · ') + '</div>';
     h += '<div style="border-top:1.5px dashed #000;margin:6px 0"></div>';
     h += '<div style="display:flex;justify-content:space-between"><b>' + (s.type === 'return' ? (en ? 'RETURN' : 'مرتجع') : (en ? 'Invoice' : 'فاتورة')) + ' #' + s.no + '</b><span dir="ltr">' + U.dt(s.date) + '</span></div>';
