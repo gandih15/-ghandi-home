@@ -13,7 +13,7 @@ const OUT = '/home/claude/ghandi-home/build/shots/tiba';
   await pg.evaluate(() => Quote.print(Store.db.quotes[0])); await pg.waitForTimeout(600);
   console.log('preview quote tpl:', await pg.evaluate(() => document.querySelector('#dpT').value), 'font:', await pg.evaluate(() => document.querySelector('#dpFv').textContent));
   await pg.evaluate(() => { var s = document.querySelector('#dpFs'); s.value = 180; s.dispatchEvent(new Event('input')); }); await pg.waitForTimeout(300);
-  await pg.click('#dpFit'); await pg.waitForTimeout(300);
+  await pg.click('.mask #pgFull'); await pg.waitForTimeout(300);
   await pg.screenshot({ path: OUT + '/30_preview.png' });
   console.log('saved from preview:', await pg.evaluate(() => { var d = docCfg(); return [d.font, d.margin].join(','); }));
   await pg.evaluate(() => { while (document.querySelector('.mask')) Modal.close(); });
