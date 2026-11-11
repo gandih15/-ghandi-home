@@ -97,7 +97,7 @@ ipcMain.handle('print', (ev, o) => new Promise((resolve) => {
     const opt = { silent: !!o.silent, printBackground: true, copies: o.copies || 1, margins: { marginType: 'none' } };
     if (o.printer) opt.deviceName = o.printer;
     if (o.pageSize) opt.pageSize = o.pageSize;
-    else if (o.pageName) { opt.pageSize = ({ a4: 'A4', a5: 'A5', letter: 'Letter' })[String(o.pageName).toLowerCase()] || undefined; opt.scaleFactor = 100; }
+    else if (o.pageName) { opt.pageSize = ({ a4: 'A4', a5: 'A5', letter: 'Letter' })[String(o.pageName).toLowerCase()] || undefined; opt.scaleFactor = Math.max(25, Math.min(400, Math.round(Number(o.scale) || 100))); }
     pw.webContents.print(opt, (ok, err) => { resolve({ ok, error: err || '' }); setTimeout(() => { try { pw.destroy(); } catch (e) { } }, 500); });
   }, 300));
 }));
