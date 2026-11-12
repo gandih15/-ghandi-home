@@ -61,8 +61,17 @@ function docPage() {
       '<div class="muted small">🖋️ ' + L('درجة الحبر', 'Ink darkness') + '</div><div class="seg" id="pgInk">' + DocInk.LV.map(function (x, i) { return '<button data-ink="' + (i + 1) + '" class="' + (U.n(p.ink) === i + 1 ? 'on' : '') + '">' + L(x[0], x[1]) + '</button>'; }).join('') + '</div>' +
       '<div class="row wrap" style="gap:6px"><button class="btn sm" id="pgFull">📐 ' + L('ملء الورقة (هامش 4)', 'Fill sheet (4 mm)') + '</button>' + (dpr > 100 ? '<button class="btn sm" id="pgDpr" title="' + L('لو الطباعة بتطلع أصغر من المعاينة', 'If prints come out smaller than the preview') + '">🖥️ ' + L('تعويض مقياس الشاشة ', 'Compensate screen scale ') + dpr + '%</button>' : '') + '<button class="btn sm ghost" id="pgRst">↺ ' + L('الافتراضي', 'Default') + '</button></div>' +
       '<div class="muted small">' + L('لو الورقة بتطلع أصغر من المعاينة: زوّد «حجم الطباعة» (مثلاً 125%). لو بتطلع مقصوصة: قلّله. «عرض الفاتورة» + يمين/نص/شمال بيحددوا مكانها على الورقة.', 'Prints smaller than the preview? Raise the print scale (e.g. 125%). Cut off? Lower it.') + '</div>';
-    var sync = function () { $$('[data-pg]', c).forEach(function (i) { i.value = p[i.dataset.pg]; }); $$('#pgAl [data-al]', c).forEach(function (b) { b.classList.toggle('on', b.dataset.al === p.align); }); };
-    $$('[data-pg]', c).forEach(function (i) { i.oninput = function () { if (i.value === '') return; p[i.dataset.pg] = U.n(i.value); onChange(); }; });
+    var warn = document.createElement('div'); warn.className = 'chip warn'; warn.style.cssText = 'display:none;white-space:normal'; c.insertBefore(warn, c.children[1]);
+    var check = function () {
+      var msg = [];
+      if (U.n(p.width) < 100) msg.push(L('عرض الفاتورة ', 'Width ') + p.width + '% ' + L('(مش مالية الورقة)', '(not full width)'));
+      if (U.n(p.scale) !== 100) msg.push(L('حجم الطباعة ', 'Scale ') + p.scale + '%');
+      if (Math.abs(U.n(p.r) - U.n(p.l)) > 3) msg.push(L('الهامش اليمين ', 'Right ') + p.r + L(' والشمال ', ' vs left ') + p.l + L(' مش زي بعض', ' differ'));
+      warn.style.display = msg.length ? 'block' : 'none'; warn.textContent = '⚠️ ' + msg.join(' · ') + ' — ' + L('لو الفاتورة بتطلع صغيرة أو على جنب دوس «ملء الورقة»', 'press Fill sheet if the page looks small');
+    };
+    var sync = function () { $$('[data-pg]', c).forEach(function (i) { i.value = p[i.dataset.pg]; }); $$('#pgAl [data-al]', c).forEach(function (b) { b.classList.toggle('on', b.dataset.al === p.align); }); check(); };
+    $$('[data-pg]', c).forEach(function (i) { i.oninput = function () { if (i.value === '') return; p[i.dataset.pg] = U.n(i.value); check(); onChange(); }; });
+    setTimeout(check, 0);
     $$('#pgAl [data-al]', c).forEach(function (b) { b.onclick = function () { p.align = b.dataset.al; sync(); onChange(); }; });
     $$('#pgVia [data-via]', c).forEach(function (b) { b.onclick = function () { p.via = b.dataset.via; $$('#pgVia [data-via]', c).forEach(function (x) { x.classList.toggle('on', x === b); }); onChange(); }; });
     $('#pgForce', c).onchange = function () { p.force = this.checked; onChange(); };
