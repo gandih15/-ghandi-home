@@ -97,7 +97,7 @@ ipcMain.handle('print', (ev, o) => new Promise((resolve) => {
     const opt = { silent: !!o.silent, printBackground: true, copies: o.copies || 1, margins: { marginType: 'none' } };
     if (o.printer) opt.deviceName = o.printer;
     if (o.pageSize) opt.pageSize = o.pageSize;
-    else if (o.pageName) { opt.pageSize = ({ a4: 'A4', a5: 'A5', letter: 'Letter' })[String(o.pageName).toLowerCase()] || undefined; opt.scaleFactor = Math.max(25, Math.min(400, Math.round(Number(o.scale) || 100))); }
+    else if (o.pageName) { if (o.forcePage) opt.pageSize = ({ a4: 'A4', a5: 'A5', letter: 'Letter' })[String(o.pageName).toLowerCase()] || undefined; const sc = Math.round(Number(o.scale) || 100); if (sc !== 100) opt.scaleFactor = Math.max(25, Math.min(400, sc)); }
     pw.webContents.print(opt, (ok, err) => { resolve({ ok, error: err || '' }); setTimeout(() => { try { pw.destroy(); } catch (e) { } }, 500); });
   }, 300));
 }));
@@ -208,3 +208,24 @@ ipcMain.handle('useVersion', async (ev, v) => {
     return { ok: true };
   } catch (e) { return { ok: false, error: e.code === 'EPERM' || e.code === 'EACCES' ? 'مفيش صلاحية كتابة في فولدر البرنامج — شغّل البرنامج كمسؤول (Run as administrator) مرة وجرّب تاني' : e.message }; }
 });
+
+/* ---------- print through a PDF: exact page, opened in the PC's PDF viewer (Edge…) to print from there ---------- */
+ipcMain.handle('printPdf', (ev, o) => new Promise((resolve) => {
+  const dir = path.join(DATA, 'profile', 'prints'); try { fs.mkdirSync(dir, { recursive: true }); } catch (e) { }
+  const tmp = path.join(DATA, 'profile', 'print-pdf.html');
+  try { fs.writeFileSync(tmp, o.html, 'utf8'); } catch (e) { return resolve({ ok: false, error: e.message }); }
+  const pw = new BrowserWindow({ show: false, width: 800, height: 1000, webPreferences: { javascript: false } });
+  pw.loadFile(tmp);
+  pw.webContents.once('did-finish-load', () => setTimeout(async () => {
+    try {
+      const data = await pw.webContents.printToPDF({ printBackground: true, preferCSSPageSize: true });
+      // keep only the last 20 files
+      try { const old = fs.readdirSync(dir).filter(n => /\.pdf$/i.test(n)).sort(); old.slice(0, Math.max(0, old.length - 19)).forEach(n => { try { fs.unlinkSync(path.join(dir, n)); } catch (e) { } }); } catch (e) { }
+      const out = path.join(dir, (String(o.name || 'ghandi').replace(/[\\/:*?"<>|]/g, '_')) + '-' + Date.now() + '.pdf');
+      fs.writeFileSync(out, data);
+      const err = o.open === false ? '' : await shell.openPath(out);
+      resolve({ ok: !err, path: out, error: err || '' });
+    } catch (e) { resolve({ ok: false, error: e.message }); }
+    setTimeout(() => { try { pw.destroy(); } catch (e) { } }, 300);
+  }, 300));
+}));

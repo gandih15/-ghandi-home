@@ -33,7 +33,17 @@ function docPage() {
   };
   // every A4 job carries the print scale to the printer
   var pp = Printer.print;
-  Printer.print = function (html, opt) { opt = opt || {}; if (/@page\{size:(A4|A5|letter)/i.test(opt.css || '') && !opt.scale) opt.scale = U.n(docPage().scale) || 100; return pp.call(this, html, opt); };
+  Printer.print = function (html, opt) {
+    opt = opt || {}; var a4 = /@page\{size:(A4|A5|letter)/i.test(opt.css || ''), p = docPage();
+    if (a4 && !opt.scale) opt.scale = U.n(p.scale) || 100;
+    if (a4) opt.forcePage = !!p.force;
+    if (a4 && p.via === 'pdf' && IS_ELECTRON) {
+      var doc = '<!doctype html><html dir="' + (opt.dir || 'rtl') + '"><head><meta charset="utf-8"><style>' + (opt.css || '') + '</style></head><body>' + html + '</body></html>';
+      toast('📄 ' + L('بيتعمل ملف PDF وهيفتح — اطبع منه', 'Making a PDF — print it from the viewer'), 'ok');
+      return IPC.invoke('printPdf', { html: doc, name: L('فاتورة', 'invoice') }).then(function (r) { if (!r.ok) toast(r.error || 'PDF error', 'bad'); });
+    }
+    return pp.call(this, html, opt);
+  };
 
   var ui = function (p, onChange) {
     var c = document.createElement('div'); c.className = 'card col'; c.style.padding = '10px'; c.id = 'pgCard';
@@ -43,12 +53,16 @@ function docPage() {
       '<div class="grid g2">' + n('scale', L('حجم الطباعة %', 'Print scale %'), 25, 400) + n('width', L('عرض الفاتورة %', 'Content width %'), 40, 100) + '</div>' +
       '<div class="muted small">' + L('الهوامش بالمللي:', 'Margins (mm):') + '</div><div class="grid g4">' + n('t', L('فوق', 'Top'), 0, 40) + n('r', L('يمين', 'Right'), 0, 40) + n('b', L('تحت', 'Bottom'), 0, 40) + n('l', L('شمال', 'Left'), 0, 40) + '</div>' +
       '<div class="seg" id="pgAl">' + [['right', '➡️ ' + L('يمين', 'Right')], ['center', '↔️ ' + L('في النص', 'Centre')], ['left', '⬅️ ' + L('شمال', 'Left')]].map(function (a) { return '<button data-al="' + a[0] + '" class="' + (p.align === a[0] ? 'on' : '') + '">' + a[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="muted small">🧭 ' + L('طريقة الطباعة', 'How to print') + '</div><div class="seg" id="pgVia"><button data-via="direct" class="' + (p.via !== 'pdf' ? 'on' : '') + '">🖨️ ' + L('على الطابعة مباشرة', 'Straight to printer') + '</button><button data-via="pdf" class="' + (p.via === 'pdf' ? 'on' : '') + '">📄 ' + L('ملف PDF وأطبع منه', 'PDF, print from viewer') + '</button></div>' +
+      '<label class="row small"><input type="checkbox" id="pgForce"' + (p.force ? ' checked' : '') + '> ' + L('ابعت مقاس الورق للطابعة إجباري (سيبها مقفولة لو الطابعة متظبطة على Letter)', 'Force the paper size on the printer') + '</label>' +
       '<div class="muted small">🖋️ ' + L('درجة الحبر', 'Ink darkness') + '</div><div class="seg" id="pgInk">' + DocInk.LV.map(function (x, i) { return '<button data-ink="' + (i + 1) + '" class="' + (U.n(p.ink) === i + 1 ? 'on' : '') + '">' + L(x[0], x[1]) + '</button>'; }).join('') + '</div>' +
       '<div class="row wrap" style="gap:6px"><button class="btn sm" id="pgFull">📐 ' + L('ملء الورقة (هامش 4)', 'Fill sheet (4 mm)') + '</button>' + (dpr > 100 ? '<button class="btn sm" id="pgDpr" title="' + L('لو الطباعة بتطلع أصغر من المعاينة', 'If prints come out smaller than the preview') + '">🖥️ ' + L('تعويض مقياس الشاشة ', 'Compensate screen scale ') + dpr + '%</button>' : '') + '<button class="btn sm ghost" id="pgRst">↺ ' + L('الافتراضي', 'Default') + '</button></div>' +
       '<div class="muted small">' + L('لو الورقة بتطلع أصغر من المعاينة: زوّد «حجم الطباعة» (مثلاً 125%). لو بتطلع مقصوصة: قلّله. «عرض الفاتورة» + يمين/نص/شمال بيحددوا مكانها على الورقة.', 'Prints smaller than the preview? Raise the print scale (e.g. 125%). Cut off? Lower it.') + '</div>';
     var sync = function () { $$('[data-pg]', c).forEach(function (i) { i.value = p[i.dataset.pg]; }); $$('#pgAl [data-al]', c).forEach(function (b) { b.classList.toggle('on', b.dataset.al === p.align); }); };
     $$('[data-pg]', c).forEach(function (i) { i.oninput = function () { if (i.value === '') return; p[i.dataset.pg] = U.n(i.value); onChange(); }; });
     $$('#pgAl [data-al]', c).forEach(function (b) { b.onclick = function () { p.align = b.dataset.al; sync(); onChange(); }; });
+    $$('#pgVia [data-via]', c).forEach(function (b) { b.onclick = function () { p.via = b.dataset.via; $$('#pgVia [data-via]', c).forEach(function (x) { x.classList.toggle('on', x === b); }); onChange(); }; });
+    $('#pgForce', c).onchange = function () { p.force = this.checked; onChange(); };
     $$('#pgInk [data-ink]', c).forEach(function (b) { b.onclick = function () { p.ink = +b.dataset.ink; $$('#pgInk [data-ink]', c).forEach(function (x) { x.classList.toggle('on', x === b); }); onChange(); }; });
     $('#pgFull', c).onclick = function () { p.t = p.r = p.b = p.l = 4; p.width = 100; p.align = 'center'; sync(); onChange(); };
     if ($('#pgDpr', c)) $('#pgDpr', c).onclick = function () { p.scale = dpr; sync(); onChange(); toast('🖥️ ' + L('حجم الطباعة بقى ', 'Print scale set to ') + dpr + '%', 'ok'); };
@@ -142,6 +156,18 @@ var DocLock = {
   DocPrev.open = function () {
     var r = op.apply(this, arguments), m = $$('.mask').pop(); if (!m || !$('#dpF', m) || !DocLock.on()) return r;
     var side = $('#dpT', m) && $('#dpT', m).closest('.col'); if (side) { DocLock.freeze(side, [$('#dpSet', m)]); var n = document.createElement('div'); n.className = 'chip ok'; n.style.cssText = 'display:block;white-space:normal'; n.textContent = '🔒 ' + L('إعدادات الفاتورة مقفولة — بتتطبع زي ما هي. تفتح القفل من صفحة تصميم الفاتورة.', 'Invoice settings are locked — printing as saved.'); side.insertBefore(n, side.firstChild); }
+    return r;
+  };
+})();
+/* one-off: print this document through a PDF from the preview window */
+(function () {
+  var op = DocPrev.open;
+  DocPrev.open = function () {
+    var r = op.apply(this, arguments), m = $$('.mask').pop(), go2 = m && $('#dpGo', m); if (!go2 || $('#dpPdf', m)) return r;
+    var b = document.createElement('button'); b.className = 'btn'; b.id = 'dpPdf'; b.textContent = '📄 ' + L('PDF واطبع منه', 'PDF & print from it');
+    b.title = L('بيعمل ملف PDF بالمقاس المظبوط ويفتحه — اطبع منه بـ «Fit to printable area» زي المتصفح', 'Makes an exact PDF and opens it');
+    b.onclick = function () { if (!IS_ELECTRON) return toast(L('متاح في برنامج الويندوز', 'Windows app only'), 'bad'); var p = docPage(), v = p.via; p.via = 'pdf'; try { go2.click(); } finally { p.via = v; } };
+    go2.parentNode.insertBefore(b, go2);
     return r;
   };
 })();
