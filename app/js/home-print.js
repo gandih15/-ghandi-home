@@ -40,7 +40,7 @@ var DocLbl = function (k) { return lang() === 'en' ? ({ saleTitle: 'Sales invoic
     tpl = tpl || d.tpl[A4.kindNow || 'other'] || 'classic';
     var size = { A4: 'A4', A5: 'A5', Letter: 'letter' }[d.paper] || 'A4';
     return css0.apply(this, arguments).replace(/@page\{[^}]*\}/, '@page{size:' + size + ';margin:' + (String(d.margin) === '0' ? 0 : (U.n(d.margin) || 10)) + 'mm}') + A4.tplCss(tpl) +
-      (f === 100 ? '' : '.a4{zoom:' + (f / 100) + '}') + (sh.logo ? '' : '.a4h .shop img{display:none}') + (sh.shop ? '' : '.a4h .sm{display:none}') + (sh.words ? '' : '.words{visibility:hidden}') + (sh.terms ? '' : '.terms{display:none}') + (sh.sign ? '' : '.sign{display:none}') + (sh.foot ? '' : '.ft{display:none}') +
+      '' + (sh.logo ? '' : '.a4h .shop img{display:none}') + (sh.shop ? '' : '.a4h .sm{display:none}') + (sh.words ? '' : '.words{visibility:hidden}') + (sh.terms ? '' : '.terms{display:none}') + (sh.sign ? '' : '.sign{display:none}') + (sh.foot ? '' : '.ft{display:none}') +
       '.sign small.nm{display:block;font-weight:400;margin-top:3px;color:#333}' + (sh.sigNames ? '' : '.sign small.nm{display:none}') + (sh.sigCustOn ? '' : '.sign .s-cust{display:none}') + (sh.sigMgrOn ? '' : '.sign .s-mgr{display:none}') + (sh.sigStampOn ? '' : '.sign .s-stamp{display:none}');
   };
   // signatures can carry a name under the line: [label, name]

@@ -23,6 +23,9 @@ function docPage() {
   var css = A4.css;
   A4.css = function () {
     var c = css.apply(this, arguments), p = docPage(), d = docCfg(), size = { A4: 'A4', A5: 'A5', Letter: 'letter' }[d.paper] || 'A4';
+    // text size: every font size is multiplied (no CSS zoom — the Windows app's engine prints zoomed pages smaller)
+    var fz = Math.max(50, Math.min(220, U.n(d.font) || 100)) / 100;
+    if (fz !== 1) c = c.replace(/font-size:\s*([\d.]+)px/g, function (m, n) { return 'font-size:' + (parseFloat(n) * fz).toFixed(1) + 'px'; });
     c = c.replace(/@page\{[^}]*\}/, '@page{size:' + size + ';margin:' + mm(p.t) + ' ' + mm(p.r) + ' ' + mm(p.b) + ' ' + mm(p.l) + '}');
     var w = Math.max(40, Math.min(100, U.n(p.width) || 100)), al = p.align === 'right' ? 'margin-left:auto!important;margin-right:0!important' : p.align === 'left' ? 'margin-left:0!important;margin-right:auto!important' : 'margin-left:auto!important;margin-right:auto!important';
     var s = Math.max(25, Math.min(400, U.n(p.scale) || 100)) / 100;
