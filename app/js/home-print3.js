@@ -48,7 +48,11 @@ var DOC_FONTS = [['', 'افتراضي (Tahoma)'], ['Arial', 'Arial'], ['"Segoe U
       (o.center ? '.a4h{flex-direction:column;align-items:center;text-align:center}.a4h .shop{flex-direction:column}' : '') +
       (o.border ? '.a4{border:1.5px solid ' + ac + ';padding:10px 14px;box-sizing:border-box}' : '') +
       '.sign{margin-top:' + (U.n(o.sigH) || 26) + 'px}' +
-      (o.wm ? '.a4{position:relative}.a4:before{content:"' + String(o.wm).replace(/["\\]/g, '') + '";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:90px;font-weight:900;color:' + ac + ';opacity:' + Math.min(0.3, (U.n(o.wmOp) || 7) / 100) + ';transform:rotate(-28deg);pointer-events:none;z-index:0}' : '');
+      (o.wm ? (function () { // watermark drawn as a background picture: nothing can stick out of the page
+        var t = String(o.wm).replace(/[<>&"]/g, ''), op = Math.min(0.3, (U.n(o.wmOp) || 7) / 100);
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1100" viewBox="0 0 800 1100"><text x="400" y="560" text-anchor="middle" dominant-baseline="middle" direction="rtl" font-family="Tahoma,Arial,sans-serif" font-weight="900" font-size="' + Math.max(40, Math.min(150, Math.round(1400 / Math.max(4, t.length)))) + '" fill="' + ac + '" fill-opacity="' + op + '" transform="rotate(-28 400 560)">' + t + '</text></svg>';
+        return '.a4{background-image:url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) + '")!important;background-repeat:no-repeat!important;background-position:center 40%!important;background-size:90% auto!important}';
+      })() : '');
   };
   // thermal receipts keep their colours too
   var rc = Receipt.css;

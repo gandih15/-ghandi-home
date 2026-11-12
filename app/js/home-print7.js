@@ -2,6 +2,37 @@
    content width and position (right / centre / left). Eng. Mohamed Ali — 01098811581 */
 'use strict';
 /* ink darkness: 1 light (saves ink) · 2 lighter · 3 normal · 4 dark · 5 darkest — text stays sharp (no image filters) */
+/* before every A4 print: lay the page out at the real printable width on THIS computer and make sure nothing
+   sticks out (anything that does makes the printer shrink the whole page). If something does, it is clipped and named. */
+var FitCheck = {
+  run: function (html, opt) {
+    return new Promise(function (res) {
+      var css = opt.css || '';
+      try {
+        var p = docPage(), d = docCfg(), pw = { A4: 210, A5: 148, Letter: 216 }[d.paper] || 210;
+        var w = Math.max(200, Math.round((pw - U.n(p.l) - U.n(p.r)) * 96 / 25.4));
+        var f = document.createElement('iframe'); f.style.cssText = 'position:fixed;left:-20000px;top:0;width:' + w + 'px;height:1200px;border:0;visibility:hidden';
+        var done = false, fin = function (c) { if (done) return; done = true; setTimeout(function () { try { f.remove(); } catch (e) { } }, 50); res(c); };
+        f.onload = function () {
+          setTimeout(function () {
+            try {
+              var doc = f.contentDocument, de = doc.documentElement, sw = de.scrollWidth, cw = de.clientWidth;
+              if (sw <= cw + 2) return fin(css);
+              var bad = [], seen = {};
+              doc.querySelectorAll('body *').forEach(function (e) { var r = e.getBoundingClientRect(); if ((r.left < -2 || r.right > cw + 2) && bad.length < 4) { var n = e.tagName.toLowerCase() + (e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).join('.') : ''); if (!seen[n]) { seen[n] = 1; bad.push(n); } } });
+              toast('⚠️ ' + L('حاجة كانت طالعة بره الورقة واتصلحت تلقائي: ', 'Something stuck out of the page and was fixed: ') + (bad.join(' ، ') || (sw + '>' + cw)), 'warn');
+              try { Store.log('print.fit', sw + '>' + cw + ' ' + bad.join(',')); } catch (e) { }
+              fin(css + 'html,body{overflow:hidden!important;max-width:100%!important}body>.a4{contain:paint!important;overflow:hidden!important;max-width:100%!important}');
+            } catch (e) { fin(css); }
+          }, 120);
+        };
+        f.srcdoc = '<!doctype html><html dir="' + (opt.dir || 'rtl') + '"><head><meta charset="utf-8"><style>' + css + 'html,body{margin:0!important;padding:0!important}body>.a4{transform:none!important}</style></head><body>' + html + '</body></html>';
+        document.body.appendChild(f);
+        setTimeout(function () { fin(css); }, 2500);
+      } catch (e) { res(css); }
+    });
+  }
+};
 var DocInk = {
   LV: [['فاتح', 'Light'], ['أفتح شوية', 'Lighter'], ['عادي', 'Normal'], ['غامق', 'Dark'], ['غامق جداً', 'Darkest']],
   css: function (lv, root) {
@@ -43,6 +74,8 @@ function docPage() {
     if (a4 && /^\s*<div class="a4wrap"/.test(html)) html = html.replace(/^\s*<div class="a4wrap"[^>]*>(<style>[\s\S]*?<\/style>)?/, '').replace(/<\/div>\s*$/, '');
     if (a4 && !opt.scale) opt.scale = U.n(p.scale) || 100;
     if (a4) opt.forcePage = !!p.force;
+    var self = this;
+    if (a4 && !opt._fit) return FitCheck.run(html, opt).then(function (css) { var o2 = {}; Object.keys(opt).forEach(function (k) { o2[k] = opt[k]; }); o2.css = css; o2._fit = 1; return Printer.print.call(self, html, o2); });
     if (a4 && p.via === 'pdf' && IS_ELECTRON) {
       var doc = '<!doctype html><html dir="' + (opt.dir || 'rtl') + '"><head><meta charset="utf-8"><style>' + (opt.css || '') + '</style></head><body>' + html + '</body></html>';
       toast('📄 ' + L('بيتعمل ملف PDF وهيفتح — اطبع منه', 'Making a PDF — print it from the viewer'), 'ok');

@@ -1,7 +1,7 @@
 {
   "name": "ghandi-home",
   "productName": "Ghandi Home",
-  "version": "1.9.10",
+  "version": "1.9.11",
   "main": "index.html",
   "description": "Ghandi Home — Eng. Mohamed Ali 01098811581",
   "single-instance": true,
