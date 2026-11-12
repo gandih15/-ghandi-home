@@ -35,6 +35,9 @@ function docPage() {
   var pp = Printer.print;
   Printer.print = function (html, opt) {
     opt = opt || {}; var a4 = /@page\{size:(A4|A5|letter)/i.test(opt.css || ''), p = docPage();
+    // sales & returns printed from the POS came wrapped in an on-screen box 190mm wide + padding — wider than the
+    // printable area, so the printer shrank the whole page. Print the bare invoice instead, exactly like other documents.
+    if (a4 && /^\s*<div class="a4wrap"/.test(html)) html = html.replace(/^\s*<div class="a4wrap"[^>]*>(<style>[\s\S]*?<\/style>)?/, '').replace(/<\/div>\s*$/, '');
     if (a4 && !opt.scale) opt.scale = U.n(p.scale) || 100;
     if (a4) opt.forcePage = !!p.force;
     if (a4 && p.via === 'pdf' && IS_ELECTRON) {

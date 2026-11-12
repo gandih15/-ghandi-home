@@ -388,7 +388,7 @@ var A4 = {
   var rh = Receipt.html;
   Receipt.html = function (s, cfg) {
     var c = cfg || S().invoice;
-    if (c.paper === 'A4' && F('a4') && s && s.items && s.no != null) return '<div class="a4wrap" style="width:190mm;padding:6mm;background:#fff;color:#111"><style>' + A4.css().replace(/@page\{[^}]*\}/, '').replace(/body\{[^}]*\}/, '') + '</style>' + A4.invoice(s) + '</div>';
+    if (c.paper === 'A4' && F('a4') && s && s.items && s.no != null) return '<div class="a4wrap" style="width:190mm;max-width:100%;box-sizing:border-box;padding:6mm;background:#fff;color:#111"><style>' + A4.css().replace(/@page\{[^}]*\}/, '').replace(/body\{[^}]*\}/, '') + '</style>' + A4.invoice(s) + '</div>';
     return rh.apply(this, arguments);
   };
   var rc = Receipt.css;
